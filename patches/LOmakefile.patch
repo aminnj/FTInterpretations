@@ -1,0 +1,9 @@
+--- makefile	2019-02-04 03:19:42.000000000 -0800
++++ makefile_patched	2019-04-09 12:42:12.731386862 -0700
+@@ -1,5 +1,5 @@
+ include ../../Source/make_opts
+-FFLAGS+= -w
++FFLAGS+= -w -std=legacy
+ 
+ # Load additional dependencies of the bias module, if present
+ ifeq (,$(wildcard ../bias_dependencies))
