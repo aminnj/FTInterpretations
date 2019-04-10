@@ -7,12 +7,8 @@ Hosts MadGraph models and setup for various interpretations:
 
 ### Set up the environment
 
-Need to do this every time to get an environment. The first time, it will
+Need to `source setup.sh` every time to get an environment. The first time, it will
 download and set up MadGraph
-
-```bash
-source setup.sh
-```
 
 ### Write proc cards
 
@@ -32,8 +28,7 @@ When setting the `--jobs` parameter, be mindful that MG will spawn multiple
 processes per card (3 by default in `write_cards.py`). `--shuf` mixes things
 up. 
 ```bash
-parallel --nice 10 --jobs 10 --bar --shuf --joblog joblog.txt <
-commands.txt
+parallel --nice 10 --jobs 10 --bar --shuf --joblog joblog.txt < commands.txt
 ```
 
 ### Collect outputs
@@ -48,4 +43,8 @@ cards adds up to hundreds of GB).
 
 ### Plotting
 
-`cd plotting/`
+`cd plotting/` and see instructions there.
+
+### Running cards with condor
+
+Make a tarball of the MadGraph directory with `make_tar.sh`, then `cd batch/` and follow instructions there.

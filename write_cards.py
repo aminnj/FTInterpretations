@@ -23,6 +23,7 @@ def get_card_dmscalar(
             }
 
     template = dedent("""
+    set auto_update 0
     set run_mode 2
     set nb_core {ncores}
 
@@ -72,6 +73,7 @@ def get_card_dmpseudo(
             }
 
     template = dedent("""
+    set auto_update 0
     set run_mode 2
     set nb_core {ncores}
 
@@ -123,6 +125,7 @@ def get_card_2hdm(
 
     template = dedent("""
 
+    set auto_update 0
     set run_mode 2
     set nb_core {ncores}
 
@@ -176,6 +179,7 @@ def get_card_zprime(
             "tttt": "generate p p > t~ t t~ t QED=2",
             }
     template = dedent("""
+    set auto_update 0
     set run_mode 2
     set nb_core {ncores}
 
@@ -218,6 +222,7 @@ def get_card_phi(
             "tttt": "generate p p > t~ t t~ t QED=2",
             }
     template = dedent("""
+    set auto_update 0
     set run_mode 2
     set nb_core {ncores}
 

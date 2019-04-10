@@ -31,3 +31,6 @@ if [ ! -d $mgdir ]; then
     # Copy over models
     cp -r models/* $mgdir/models/
 fi
+
+export MGEXE=$(ls -1 MG5*/bin/mg5_aMC | tail -n 1)
+alias run="./$MGEXE"
