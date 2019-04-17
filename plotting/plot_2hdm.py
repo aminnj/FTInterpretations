@@ -33,6 +33,8 @@ tth = df[df.proc=="tth"].rename(index=str,columns={"xsec":"xsec_tth"}).drop(["pr
 thw = df[df.proc=="thw"].rename(index=str,columns={"xsec":"xsec_thw"}).drop(["proc"],axis=1)
 thq = df[df.proc=="thq"].rename(index=str,columns={"xsec":"xsec_thq"}).drop(["proc"],axis=1)
 
+print df.query("mass==550 and tanbeta==1")
+
 # make dataframe where each row contains all 6 processes, and sum up xsecs
 dfc = tta
 for x in [taw,taq,tth,thw,thq]:
@@ -41,44 +43,64 @@ dfc["xsec_a"] = (dfc["xsec_taw"]+dfc["xsec_taq"]+dfc["xsec_tta"])
 dfc["xsec_h"] = (dfc["xsec_thw"]+dfc["xsec_thq"]+dfc["xsec_tth"])
 dfc["xsec_b"] = (dfc["xsec_a"]+dfc["xsec_h"])
 
+dfc["stfrac_h"] = (dfc["xsec_thw"]+dfc["xsec_thq"])/dfc["xsec_h"]
+dfc["stfrac_a"] = (dfc["xsec_taw"]+dfc["xsec_taq"])/dfc["xsec_a"]
+
 print dfc
 
-fig,ax = plt.subplots()
-key = "xsec_h"
-# ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=dfc[key].min(), vmax=dfc[key].max()),
-ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=1.5*1e-3,vmax=500*1e-3),
-                   cmap='cividis')
-                   # cmap='kRainbow')
-for i,(m,tb,xsec) in dfc[["mass","tanbeta",key]].iterrows():
-    xsec = xsec*1e3
-    if xsec >= 100.:
-        s = "{:.0f}".format(xsec)
-    elif xsec >= 10.:
-        s = "{:.1f}".format(xsec)
-    elif xsec >= 1.:
-        s = "{:.2f}".format(xsec)
+for key in [
+        # "xsec_h",
+        # "xsec_a",
+        # "stfrac_h",
+        "stfrac_a",
+        ]:
+    fig,ax = plt.subplots()
+    # key = "xsec_h"
+    # ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=dfc[key].min(), vmax=dfc[key].max()),
+    ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=1.5*1e-3,vmax=500*1e-3),
+                       cmap='cividis')
+                       # cmap='kRainbow')
+
+    for i,(m,tb,val) in dfc[["mass","tanbeta",key]].iterrows():
+        s = "{:.2f}".format(val)
+        ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
+        # print m,tb,xsec
+    # plt.colorbar()
+
+    # for i,(m,tb,xsec) in dfc[["mass","tanbeta",key]].iterrows():
+    #     xsec = xsec*1e3
+    #     if xsec >= 100.:
+    #         s = "{:.0f}".format(xsec)
+    #     elif xsec >= 10.:
+    #         s = "{:.1f}".format(xsec)
+    #     elif xsec >= 1.:
+    #         s = "{:.2f}".format(xsec)
+    #     else:
+    #         s = "{:.3f}".format(xsec)
+    #     ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
+    #     # print m,tb,xsec
+    # # plt.colorbar()
+
+    if "_h" in key:
+        title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+H) $\times$ BR(H$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
     else:
-        s = "{:.3f}".format(xsec)
-    ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
-    # print m,tb,xsec
-# plt.colorbar()
+        title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+A) $\times$ BR(A$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
+    text = ax.set_title(title)
+    ax.set_xlim([340.,660.])
+    ax.set_ylabel(r"$\tan\beta$")
+    ax.set_xlabel("mass (GeV)")
 
-title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+H) $\times$ BR(H$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
-# title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+A) $\times$ BR(A$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
-text = ax.set_title(title)
-ax.set_xlim([340.,660.])
-ax.set_ylabel(r"$\tan\beta$")
-ax.set_xlabel("mass (GeV)")
-
-ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-ax.xaxis.set_minor_locator(MultipleLocator(10.))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.xaxis.set_minor_locator(MultipleLocator(10.))
 
 
-fig.set_tight_layout(True)
-fig.savefig("plots/test.png")
-os.system("ic plots/test.png")
-for _ in range(10):
-    print "Actually include BR(tt)!!!"
+    fig.set_tight_layout(True)
+    fname = "plots/plot_2d_2hdm_{}.png".format(key)
+    fig.savefig(fname)
+    fig.savefig(fname.replace(".png",".pdf"))
+    os.system("ic "+fname)
+    for _ in range(10):
+        print "Actually include BR(tt)!!!"
 
 fig,ax = plt.subplots()
 key = "xsec_h"

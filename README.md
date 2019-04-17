@@ -4,11 +4,17 @@ Hosts MadGraph models and setup for various interpretations:
 * two Higgs doublet models
 * simplified dark matter models
 * off-shell vector boson (zprime) and scalar boson (phi)
+* EFT $\hat H$ modifications to the scalar higgs boson propagator
 
 ### Set up the environment
 
 Need to `source setup.sh` every time to get an environment. The first time, it will
 download and set up MadGraph
+
+If you plan to use a pdf from lhapdf, you need to `./install_lhapdf.sh` once
+and then before running cards, need to use a slightly different environment
+with respect to what `source setup.sh` gives you, so do `source setup_lhapdf.sh`.
+Sigh...CMSSW gymnastics.
 
 ### Write proc cards
 

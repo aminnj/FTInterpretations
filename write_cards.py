@@ -2,6 +2,56 @@ import os
 import itertools
 from textwrap import dedent
 
+iseed = 0
+
+def get_card_oblique(
+        proc="tttt",
+        ncores=4,
+        nevents=3000,
+        mgoutputname="./runs/out_test_v1/test_v1",
+        carddir="./runs/out_test_v1/",
+        hhat = 0.1,
+        unique_seeds=False,
+        ):
+    global iseed
+    seedstr = ""
+    if unique_seeds:
+        iseed += 1
+        seedstr = "set run_card iseed {}".format(iseed)
+    d_procstr = {
+            "tttt": "generate p p > t~ t t~ t QED=2",
+            }
+    template = dedent("""
+    set auto_update 0
+    set run_mode 2
+    set nb_core {ncores}
+
+    import model Oblique_UFO
+
+    define p = p b b~
+    define j = p
+    {procstr}
+    output {mgoutputname} -nojpeg
+    launch
+    set run_card ebeam1 6500.0
+    set run_card ebeam2 6500.0
+    set run_card nevents {nevents}
+
+    set run_card use_syst False
+    set param_card PROP 1 {hhat}
+    {seedstr}
+    """)
+
+    return template.format(
+            ncores=ncores,
+            nevents=nevents,
+            procstr=d_procstr[proc],
+            hhat = hhat,
+            mgoutputname=mgoutputname,
+            seedstr=seedstr,
+            )
+
+
 def get_card_dmscalar(
         proc="ttbar",
         ncores=4,
@@ -16,16 +66,35 @@ def get_card_dmscalar(
             "stwdm": "generate p p > t w- chi~ chi /h\nadd process p p > t~ w+ chi~ chi /h",
             # "ttdm": "generate p p > t~ t chi~ chi\nadd process p p > t~ t chi~ chi j",
             "ttdm": "generate p p > t~ t chi~ chi",
-            "sttsm": "generate p p > t~ b t~ t j $$ w+ w-\nadd process p p > t b~ t~ t j $$ w+ w-",
-            "stwsm": "generate p p > t w- t~ t /h\nadd process p p > t~ w+ t~ t /h",
+            "sttsm": "generate p p > t~ b t~ t j $$ w+ w- NP==2\nadd process p p > t b~ t~ t j $$ w+ w- NP==2",
+            "stwsm": "generate p p > t w- t~ t /h NP==2\nadd process p p > t~ w+ t~ t /h NP==2",
             # "ttsm": "generate p p > t~ t chi~ chi\nadd process p p > t~ t chi~ chi j",
-            "ttsm": "generate p p > t~ t t~ t",
+            "ttsm": "generate p p > t~ t t~ t NP==2",
             }
+
+    extraparams = dedent("""
+    set run_card maxjetflavor 4
+    set run_card pdlabel 'lhapdf'
+    set run_card lhaid 263000
+    """)
+    if proc in ["sttsm","sttdm"]:
+        extraparams = dedent("""
+        set run_card maxjetflavor 4
+        set run_card pdlabel 'lhapdf'
+        set run_card lhaid 263400
+        """)
+    if proc in ["stwsm","stwdm"]:
+        extraparams = dedent("""
+        set run_card maxjetflavor 5
+        set run_card pdlabel 'lhapdf'
+        set run_card lhaid 263000
+        """)
 
     template = dedent("""
     set auto_update 0
     set run_mode 2
     set nb_core {ncores}
+    set lhapdf /cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/lhapdf6/6.1.5-cms/bin/lhapdf-config
 
     import model DMScalar
 
@@ -39,7 +108,7 @@ def get_card_dmscalar(
     set run_card nevents {nevents}
 
     set run_card use_syst False
-    set run_card maxjetflavor 4
+    {extraparams}
     set param_card mass 9100000 {massmed}
     set param_card mass 9100022 {massdm}
     """)
@@ -50,6 +119,7 @@ def get_card_dmscalar(
             massmed=massmed,
             massdm=massdm,
             mgoutputname=mgoutputname,
+            extraparams=extraparams,
             )
 
 def get_card_dmpseudo(
@@ -66,11 +136,29 @@ def get_card_dmpseudo(
             "stwdm": "generate p p > t w- chi~ chi /h\nadd process p p > t~ w+ chi~ chi /h",
             # "ttdm": "generate p p > t~ t chi~ chi\nadd process p p > t~ t chi~ chi j",
             "ttdm": "generate p p > t~ t chi~ chi",
-            "sttsm": "generate p p > t~ b t~ t j $$ w+ w-\nadd process p p > t b~ t~ t j $$ w+ w-",
-            "stwsm": "generate p p > t w- t~ t /h\nadd process p p > t~ w+ t~ t /h",
+            "sttsm": "generate p p > t~ b t~ t j $$ w+ w- NP==2\nadd process p p > t b~ t~ t j $$ w+ w- NP==2",
+            "stwsm": "generate p p > t w- t~ t /h NP==2\nadd process p p > t~ w+ t~ t /h NP==2",
             # "ttsm": "generate p p > t~ t chi~ chi\nadd process p p > t~ t chi~ chi j",
-            "ttsm": "generate p p > t~ t t~ t",
+            "ttsm": "generate p p > t~ t t~ t NP==2",
             }
+
+    extraparams = dedent("""
+    set run_card maxjetflavor 4
+    set run_card pdlabel 'lhapdf'
+    set run_card lhaid 263000
+    """)
+    if proc in ["sttsm","sttdm"]:
+        extraparams = dedent("""
+        set run_card maxjetflavor 4
+        set run_card pdlabel 'lhapdf'
+        set run_card lhaid 263400
+        """)
+    if proc in ["stwsm","stwdm"]:
+        extraparams = dedent("""
+        set run_card maxjetflavor 5
+        set run_card pdlabel 'lhapdf'
+        set run_card lhaid 263000
+        """)
 
     template = dedent("""
     set auto_update 0
@@ -89,7 +177,7 @@ def get_card_dmpseudo(
     set run_card nevents {nevents}
 
     set run_card use_syst False
-    set run_card maxjetflavor 4
+    {extraparams}
     set param_card mass 9100000 {massmed}
     set param_card mass 9100022 {massdm}
     """)
@@ -100,6 +188,7 @@ def get_card_dmpseudo(
             massmed=massmed,
             massdm=massdm,
             mgoutputname=mgoutputname,
+            extraparams=extraparams,
             )
 
 def get_card_2hdm(
@@ -269,79 +358,168 @@ def get_card(model,**kwargs):
         return get_card_dmscalar(**kwargs)
     elif model == "dmpseudo":
         return get_card_dmpseudo(**kwargs)
+    elif model == "oblique":
+        return get_card_oblique(**kwargs)
     else:
         raise Exception("{} isn't a valid model".format(model))
 
 if __name__ == "__main__":
 
+    do_phi = False
+    do_zprime = False
+    do_2hdm = False
+    do_dmscalar = False
+    do_dmpseudo = False
+    do_dm_test = False
+    do_oblique = False
+    do_oblique_manyevents = False
+    do_oblique_run2 = True
+
     os.system("mkdir -p runs")
 
-    model = "phi"
-    carddir = "./runs/out_phi_scan_v1/"
-    os.system("mkdir -p {}".format(carddir))
-    proc = "tttt"
-    for mass in [25,75,125,200,280,300,310,340]:
-        for gt in [0.5,0.7,0.8,0.9,1.0,1.1,1.2,1.3]:
+    if do_phi:
+        model = "phi"
+        carddir = "./runs/out_phi_scan_v1/"
+        os.system("mkdir -p {}".format(carddir))
+        proc = "tttt"
+        vals = sum([
+            list(itertools.product([25,75,125,200,280,300,310,340], [0.5,0.7,0.8,0.9,1.0,1.1,1.2,1.3])),
+            list(itertools.product([25], [0.0])),
+            ],[])
+        for mass,gt in vals:
             tag = "{model}_{proc}_{mass}_{gt}".format(model=model,proc=proc,mass=mass,gt=str(gt).replace(".","p"))
             mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
             cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
             buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,gt=gt)
             write_card(buff,cardname,dryrun=False)
 
-    model = "zprime"
-    carddir = "./runs/out_zprime_scan_v1/"
-    os.system("mkdir -p {}".format(carddir))
-    proc = "tttt"
-    vals = sum([
-        list(itertools.product([25], [0.0,0.025,0.05,0.10,0.15,0.20])),
-        list(itertools.product([50], [0.1,0.15,0.20,0.25,0.30,0.35])),
-        list(itertools.product([75], [0.1,0.2,0.25,0.30,0.35,0.4,0.5])),
-        list(itertools.product([100], [0.1,0.2,0.25,0.30,0.35,0.4,0.45,0.5,0.6])),
-        list(itertools.product([125], [0.1,0.2,0.3,0.4,0.45,0.50,0.55,0.60,0.65,0.7])),
-        list(itertools.product([175], [0.5,0.6,0.7,0.8,0.9,1.0])),
-        list(itertools.product([200,225,250,275,300,325], [0.6,0.7,0.8,0.9,1.0,1.1])),
-        list(itertools.product([315], [0.8,0.9,1.0])),
-        list(itertools.product([340], [0.6,0.7,0.8,0.9,1.0])),
-        ],[])
-    for mass,gt in vals:
-        tag = "{model}_{proc}_{mass}_{gt}".format(model=model,proc=proc,mass=mass,gt=str(gt).replace(".","p"))
-        mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
-        cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
-        buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,gt=gt)
-        write_card(buff,cardname,dryrun=False)
+    if do_zprime:
+        model = "zprime"
+        carddir = "./runs/out_zprime_scan_v1/"
+        os.system("mkdir -p {}".format(carddir))
+        proc = "tttt"
+        vals = sum([
+            list(itertools.product([25], [0.0,0.025,0.05,0.10,0.15,0.20])),
+            list(itertools.product([50], [0.1,0.15,0.20,0.25,0.30,0.35])),
+            list(itertools.product([75], [0.1,0.2,0.25,0.30,0.35,0.4,0.5])),
+            list(itertools.product([100], [0.1,0.2,0.25,0.30,0.35,0.4,0.45,0.5,0.6])),
+            list(itertools.product([125], [0.1,0.2,0.3,0.4,0.45,0.50,0.55,0.60,0.65,0.7])),
+            list(itertools.product([175], [0.5,0.6,0.7,0.8,0.9,1.0])),
+            list(itertools.product([200,225,250,275,300,325], [0.6,0.7,0.8,0.9,1.0,1.1])),
+            list(itertools.product([315], [0.8,0.9,1.0])),
+            list(itertools.product([340], [0.6,0.7,0.8,0.9,1.0])),
+            ],[])
+        for mass,gt in vals:
+            tag = "{model}_{proc}_{mass}_{gt}".format(model=model,proc=proc,mass=mass,gt=str(gt).replace(".","p"))
+            mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+            cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+            buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,gt=gt)
+            write_card(buff,cardname,dryrun=False)
 
-    model = "2hdm"
-    carddir = "./runs/out_2hdm_scan_v1/"
-    os.system("mkdir -p {}".format(carddir))
-    for proc in ["tth","tta","thw","taw","thq","taq"]:
-        for mass in range(350,650+20,20):
-            for tanbeta in [0.2,0.5,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.5,3.0]:
-                tag = "{model}_{proc}_{mass}_{tanbeta}".format(model=model,proc=proc,mass=mass,tanbeta=str(tanbeta).replace(".","p"))
+    if do_2hdm:
+        model = "2hdm"
+        carddir = "./runs/out_2hdm_scan_v1/"
+        os.system("mkdir -p {}".format(carddir))
+        for proc in ["tth","tta","thw","taw","thq","taq"]:
+            for mass in range(350,650+20,20):
+                for tanbeta in [0.2,0.5,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.5,3.0]:
+                    tag = "{model}_{proc}_{mass}_{tanbeta}".format(model=model,proc=proc,mass=mass,tanbeta=str(tanbeta).replace(".","p"))
+                    mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                    cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                    buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,decouplemass=10000,tanbeta=tanbeta)
+                    write_card(buff,cardname,dryrun=False)
+
+    if do_dmscalar:
+        model = "dmscalar"
+        carddir = "./runs/out_dmscalar_scan_v1/"
+        os.system("mkdir -p {}".format(carddir))
+        for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
+            for massmed,massdm in list(itertools.product(range(300,750,50),range(0,750,50))):
+                massdm = max(massdm,1)
+                tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)
                 mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
                 cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
-                buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,decouplemass=10000,tanbeta=tanbeta)
+                buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, massmed=massmed,massdm=massdm)
                 write_card(buff,cardname,dryrun=False)
 
-    model = "dmscalar"
-    carddir = "./runs/out_dmscalar_scan_v1/"
-    os.system("mkdir -p {}".format(carddir))
-    for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
-        for massmed,massdm in list(itertools.product(range(300,750,50),range(0,750,50))):
-            massdm = max(massdm,1)
-            tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)
+    if do_dmpseudo:
+        model = "dmpseudo"
+        carddir = "./runs/out_dmpseudo_scan_v1/"
+        os.system("mkdir -p {}".format(carddir))
+        for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
+            for massmed,massdm in list(itertools.product(range(300,750,50),range(0,750,50))):
+                massdm = max(massdm,1)
+                tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)
+                mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, massmed=massmed,massdm=massdm)
+                write_card(buff,cardname,dryrun=False)
+
+    if do_oblique:
+        model = "oblique"
+        carddir = "./runs/out_oblique_scan_v1/"
+        os.system("mkdir -p {}".format(carddir))
+        proc = "tttt"
+        hhats = [0.0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.2, 0.22, 0.25]
+        for hhat in hhats:
+            tag = "{model}_{proc}_{hhat}".format(model=model,proc=proc,hhat=str(hhat).replace(".","p"))
             mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
             cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
-            buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, massmed=massmed,massdm=massdm)
+            buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, hhat=hhat)
             write_card(buff,cardname,dryrun=False)
 
-    model = "dmpseudo"
-    carddir = "./runs/out_dmpseudo_scan_v1/"
-    os.system("mkdir -p {}".format(carddir))
-    for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
-        for massmed,massdm in list(itertools.product(range(300,750,50),range(0,750,50))):
-            massdm = max(massdm,1)
-            tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)
+    if do_oblique_manyevents:
+        model = "oblique"
+        carddir = "./runs/out_obliquemanyevents_scan_v1/"
+        os.system("mkdir -p {}".format(carddir))
+        proc = "tttt"
+        hhats = [0.0, 0.1, 0.15]
+        for hhat in hhats:
+            tag = "{model}_{proc}_{hhat}".format(model=model,proc=proc,hhat=str(hhat).replace(".","p"))
             mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
             cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
-            buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, massmed=massmed,massdm=massdm)
+            buff = get_card(model=model,ncores=10,nevents=50000,proc=proc,mgoutputname=mgoutputname,carddir=carddir, hhat=hhat)
             write_card(buff,cardname,dryrun=False)
+
+    if do_oblique_run2:
+        model = "oblique"
+        for year in [2016,2017,2018]:
+            carddir = "./runs/out_obliqueyear{}_scan_v2/".format(year)
+            os.system("mkdir -p {}".format(carddir))
+            proc = "tttt"
+            hhats = [0.0,0.04,0.08,0.12,0.16]
+            for hhat in hhats:
+                tag = "{model}_{proc}_{hhat}".format(model=model,proc=proc,hhat=str(hhat).replace(".","p"))
+                mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                buff = get_card(model=model,ncores=3,nevents=50000,proc=proc,mgoutputname=mgoutputname,carddir=carddir, hhat=hhat,unique_seeds=True)
+                write_card(buff,cardname,dryrun=False)
+
+    if do_dm_test:
+        for model in ["dmpseudo","dmscalar"]:
+            # model = "dmpseudo"
+            carddir = "./runs/out_{}_scan_v3/".format(model)
+            os.system("mkdir -p {}".format(carddir))
+            for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
+            # for proc in ["ttdm", "sttdm", "stwdm"]:
+                # for massmed,massdm in list(itertools.product([500],[1])):
+                for massmed,massdm in list(itertools.product([300,350,400,450,500,600,700],[1,50,100,150,300,500,750])):
+                # for massmed,massdm in [
+                #         [10,1],
+                #         [20,1],
+                #         [50,1],
+                #         [100,1],
+                #         [200,1],
+                #         [300,1],
+                #         [500,1],
+                #         [1000,1],
+                #         [10,10],
+                #         [300,50],
+                #         ]:
+                    massdm = max(massdm,1)
+                    tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)
+                    mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                    cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                    buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, massmed=massmed,massdm=massdm)
+                    write_card(buff,cardname,dryrun=False)
+

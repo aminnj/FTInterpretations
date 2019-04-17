@@ -46,9 +46,9 @@ def set_style_defaults():
     # pdf.fonttype       : 3         ## Output Type 3 (Type3) or Type 42 (TrueType)
     # pdf.use14corefonts : False
 
-def load_data():
+def load_data(fname="../data.txt"):
     data = []
-    with open("../data.txt","r") as fh:
+    with open(fname,"r") as fh:
         for line in fh:
             parts = line.strip().split(":")
             if not parts: continue
@@ -65,7 +65,7 @@ def load_data():
 def add_cms_info(ax, typ="Preliminary", lumi="137", xtype=0.12):
     ax.text(0.0, 1.01,"CMS", horizontalalignment='left', verticalalignment='bottom', transform = ax.transAxes, weight="bold", size="x-large")
     ax.text(xtype, 1.01,typ, horizontalalignment='left', verticalalignment='bottom', transform = ax.transAxes, style="italic", size="x-large")
-    ax.text(0.99, 1.01,"%s fb${}^{-1}$ (13 TeV)" % (lumi), horizontalalignment='right', verticalalignment='bottom', transform = ax.transAxes, size="x-large")
+    ax.text(0.99, 1.01,"%s fb${}^\mathrm{-1}$ (13 TeV)" % (lumi), horizontalalignment='right', verticalalignment='bottom', transform = ax.transAxes, size="x-large")
 
 def get_fig_ax():
     fig, ax = plt.subplots(gridspec_kw={"top":0.92,"bottom":0.14,"left":0.15,"right":0.95},figsize=(5.5,5.5))

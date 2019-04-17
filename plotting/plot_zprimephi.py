@@ -67,11 +67,15 @@ def plot_crossings(df, ul=22.5/11.97*12.32/12.32,which="phi"):
                 print "Can find coupling bound for {}".format(mass)
                 ax.plot([xcross,xcross],[0.,ul*1.5],linewidth=1.0,color="k",linestyle="--")
 
-    ax.plot([0.,1.2],[ul,ul],label="obs UL",color="k",linestyle="--")
+    ax.plot([0.,1.4],[ul,ul],label="obs UL",color="k",linestyle="--")
     ax.set_ylim([1.,ax.get_ylim()[1]])
-    ax.set_xlabel(r"$y_\mathrm{tZ'}$")
-    ax.set_title(r"$\sigma_\mathrm{NP+SM}/\sigma_\mathrm{SM}$, quadratic interpolation")
-    ax.set_xlabel("")
+    ax.set_ylabel(r"$\sigma_\mathrm{NP+SM}/\sigma_\mathrm{SM}$")
+    if which == "phi":
+        ax.set_title(r"scalar $\phi$: $\sigma_\mathrm{NP+SM}/\sigma_\mathrm{SM}$ vs $y_\mathrm{t\phi}$")
+        ax.set_xlabel(r"$y_\mathrm{t\phi}$")
+    else:
+        ax.set_title(r"vector $Z'$: $\sigma_\mathrm{NP+SM}/\sigma_\mathrm{SM}$ vs $g_\mathrm{tZ'}$")
+        ax.set_xlabel(r"$g_\mathrm{tZ'}$")
     ax.legend()
     fig.tight_layout()
     fig.savefig("plots/plot_crossings_{}.pdf".format(which))
@@ -136,10 +140,12 @@ def plot_2d_both(edges_zprime,edges_phi):
 
     thickness = 0.075
     edgecolor_zprime=(0.18,0.43,0.11,1.0)
+    ax.fill_between(edges_zprime[:,0], edges_zprime[:,1], 2.0*np.ones(len(edges_zprime)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=(0.18,0.43,0.11,0.15))
     p1 = ax.fill_between(edges_zprime[:,0], edges_zprime[:,1], edges_zprime[:,1]+thickness, linewidth=0., edgecolor=edgecolor_zprime, facecolor="none",hatch="////")
     p2 = ax.plot(edges_zprime[:,0], edges_zprime[:,1], linewidth=2.0, linestyle="-", marker="",color=edgecolor_zprime)
 
     edgecolor_phi=(0.0,0.06,0.64,1.0)
+    ax.fill_between(edges_phi[:,0], edges_phi[:,1], 2.0*np.ones(len(edges_phi)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=(0.,0.06,0.64,0.15))
     p3 = ax.fill_between(edges_phi[:,0], edges_phi[:,1], edges_phi[:,1]+thickness, linewidth=0., edgecolor=edgecolor_phi, facecolor="none",hatch="///")
     p4 = ax.plot(edges_phi[:,0], edges_phi[:,1], linewidth=2.0, linestyle="-", marker="",color=edgecolor_phi)
 
@@ -170,7 +176,7 @@ def plot_2d_both(edges_zprime,edges_phi):
 if __name__ == "__main__":
 
     # FIXME is this right? it just gives the r value which has OUR xsec!!
-    ul = (22.5/11.97*12.32)/12.32
+    ul = (23.0/11.97*12.32)/12.32
     # Scale our UL to their xsec
     # sigma_obs_prime = sigma_obs_ours / sigma_theory_ours * sigma_theory_theirs
     # Then compute sigma(np+sm)/sigma(sm) ratio
@@ -186,10 +192,14 @@ if __name__ == "__main__":
         df["coupling"] = df.tag.str.split("_").str[3].str.replace("p",".").astype(float)
         df = df.drop(["tag"],axis=1)
         df = df.sort_values(["mass","coupling"])
-        df["ratio"] = df["xsec"]/df["xsec"].min() # ratio wrt SM (smallest xsec in the list)
-
+        xsec_sm = df[df.coupling==0.]["xsec"].values.min()
+        df["ratio"] = df["xsec"]/xsec_sm # ratio wrt SM (smallest xsec in the list)
         edges = plot_crossings(df,ul=ul,which=which)
         d_edges[which] = edges
         plot_2d_single(df,edges,which=which)
+    d_edges["zprime"].dump("edges_zprime.npy")
+    d_edges["phi"].dump("edges_phi.npy")
 
-    plot_2d_both(d_edges["zprime"],d_edges["phi"])
+    edges_zprime = np.load("edges_zprime.npy")
+    edges_phi = np.load("edges_phi.npy")
+    plot_2d_both(edges_zprime,edges_phi)
