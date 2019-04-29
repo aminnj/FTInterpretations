@@ -2,8 +2,9 @@
 
 ### Making gridpacks
 
-Make gridpacks with [this script](https://github.com/cms-sw/genproductions/blob/master/bin/MadGraph5_aMCatNLO/gridpack_generation.sh) 
+We will make gridpacks with [this script](https://github.com/cms-sw/genproductions/blob/master/bin/MadGraph5_aMCatNLO/gridpack_generation.sh) 
 from the master branch of cms-sw/genproductions, following the suggestions from [this Twiki](https://twiki.cern.ch/twiki/bin/view/CMS/QuickGuideMadGraph5aMCatNLO).
+Minimal instructions follow.
 
 ```bash
 # Fork the cms-sw/genproductions repository and then clone your fork
