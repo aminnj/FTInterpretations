@@ -16,7 +16,7 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 from scipy import interpolate
 
-pd.set_option('display.max_rows', 50)
+pd.set_option('display.max_rows', 130)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 300)
 
@@ -53,21 +53,26 @@ def load_data(fname="../data.txt"):
             parts = line.strip().split(":")
             if not parts: continue
             if "hadoop" in parts[0]:
+                folder = ""
                 proctag = parts[0].rsplit("/",1)[-1].rsplit(".",1)[0]
                 xsec = float(parts[-1].strip())
             else:
+                folder = parts[0].split("/Events",1)[0].rsplit("/",2)[-2]
                 proctag = parts[0].split("/Events",1)[0].rsplit("/",1)[-1]
                 xsec = float(parts[-1].strip())
-            data.append(dict(tag=proctag,xsec=xsec))
+            data.append(dict(folder=folder,tag=proctag,xsec=xsec))
     df = pd.DataFrame(data)
     return df
 
 def add_cms_info(ax, typ="Preliminary", lumi="137", xtype=0.12):
     ax.text(0.0, 1.01,"CMS", horizontalalignment='left', verticalalignment='bottom', transform = ax.transAxes, weight="bold", size="x-large")
     ax.text(xtype, 1.01,typ, horizontalalignment='left', verticalalignment='bottom', transform = ax.transAxes, style="italic", size="x-large")
-    ax.text(0.99, 1.01,"%s fb${}^\mathrm{-1}$ (13 TeV)" % (lumi), horizontalalignment='right', verticalalignment='bottom', transform = ax.transAxes, size="x-large")
+    ax.text(0.99, 1.01,"%s fb${}^\mathregular{-1}$ (13 TeV)" % (lumi), horizontalalignment='right', verticalalignment='bottom', transform = ax.transAxes, size="x-large")
 
-def get_fig_ax():
-    fig, ax = plt.subplots(gridspec_kw={"top":0.92,"bottom":0.14,"left":0.15,"right":0.95},figsize=(5.5,5.5))
+def get_fig_ax(wide=False):
+    if wide:
+        fig, ax = plt.subplots(gridspec_kw={"top":0.92,"bottom":0.14,"left":0.15,"right":0.95},figsize=(6.5,5.5))
+    else:
+        fig, ax = plt.subplots(gridspec_kw={"top":0.92,"bottom":0.14,"left":0.15,"right":0.95},figsize=(5.5,5.5))
     return fig, ax
 
