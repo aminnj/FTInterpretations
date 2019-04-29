@@ -46,7 +46,7 @@ parallel --nice 10 --jobs 10 --bar --shuf --joblog joblog.txt < commands.txt
 
 If you're only interested in cross-sections, use `cleanup.sh` every now and
 then to delete large files inside `runs/` (or else running on thousands of
-cards adds up to hundreds of GB).
+cards adds up to hundreds of GB). Edit the patterns in the script appropriately.
 
 ### Plotting
 
