@@ -20,6 +20,7 @@ def get_card_oblique(
         seedstr = "set run_card iseed {}".format(iseed)
     d_procstr = {
             "tttt": "generate p p > t~ t t~ t QED=2",
+            "tth": "generate p p > t t~ h, (h > w+ w-, w+ > wprod wprod, w- > wprod wprod)",
             }
     template = dedent("""
     set auto_update 0
@@ -30,6 +31,8 @@ def get_card_oblique(
 
     define p = p b b~
     define j = p
+
+    define wprod = u d u~ d~
     {procstr}
     output {mgoutputname} -nojpeg
     launch
@@ -60,6 +63,8 @@ def get_card_dmscalar(
         carddir="./runs/out_test_v1/",
         massmed = 300,
         massdm = 1,
+        gdm = 1,
+        gsm = 1,
         ):
     d_procstr = {
             "sttdm": "generate p p > t~ b chi~ chi j $$ w+ w-\nadd process p p > t b~ chi~ chi j $$ w+ w-",
@@ -111,6 +116,8 @@ def get_card_dmscalar(
     {extraparams}
     set param_card mass 9100000 {massmed}
     set param_card mass 9100022 {massdm}
+    set param_card MEDCOUPLINGS 4 {gdm} # gDM
+    set param_card MEDCOUPLINGS 5 {gsm} # gqq
     """)
     return template.format(
             ncores=ncores,
@@ -120,6 +127,8 @@ def get_card_dmscalar(
             massdm=massdm,
             mgoutputname=mgoutputname,
             extraparams=extraparams,
+            gdm=gdm,
+            gsm=gsm,
             )
 
 def get_card_dmpseudo(
@@ -130,6 +139,8 @@ def get_card_dmpseudo(
         carddir="./runs/out_test_v1/",
         massmed = 300,
         massdm = 1,
+        gdm = 1,
+        gsm = 1,
         ):
     d_procstr = {
             "sttdm": "generate p p > t~ b chi~ chi j $$ w+ w-\nadd process p p > t b~ chi~ chi j $$ w+ w-",
@@ -180,6 +191,8 @@ def get_card_dmpseudo(
     {extraparams}
     set param_card mass 9100000 {massmed}
     set param_card mass 9100022 {massdm}
+    set param_card MEDCOUPLINGS 4 {gdm} # gDM
+    set param_card MEDCOUPLINGS 5 {gsm} # gqq
     """)
     return template.format(
             ncores=ncores,
@@ -189,6 +202,8 @@ def get_card_dmpseudo(
             massdm=massdm,
             mgoutputname=mgoutputname,
             extraparams=extraparams,
+            gdm=gdm,
+            gsm=gsm,
             )
 
 def get_card_2hdm(
@@ -201,16 +216,33 @@ def get_card_2hdm(
         tanbeta = 1.0,
         sinbma = 1.0,
         decouplemass = 10000,
+        decay=False,
+        unique_seeds=False,
         ):
+    global iseed
+    seedstr = ""
+    if unique_seeds:
+        iseed += 1
+        seedstr = "set run_card iseed {}".format(iseed)
 
-    d_procstr = {
-            "tth": "generate p p > tpm tpm h2",
-            "thq": "generate p p > tpm qpm h2",
-            "thw": "generate p p > tpm wpm h2",
-            "tta": "generate p p > tpm tpm h3",
-            "taq": "generate p p > tpm qpm h3",
-            "taw": "generate p p > tpm wpm h3",
-            }
+    if decay:
+        d_procstr = {
+                "tth": "generate p p > tpm tpm h2, h2 > tpm tpm",
+                "thq": "generate p p > tpm qpm h2, h2 > tpm tpm",
+                "thw": "generate p p > tpm wpm h2, h2 > tpm tpm",
+                "tta": "generate p p > tpm tpm h3, h3 > tpm tpm",
+                "taq": "generate p p > tpm qpm h3, h3 > tpm tpm",
+                "taw": "generate p p > tpm wpm h3, h3 > tpm tpm",
+                }
+    else:
+        d_procstr = {
+                "tth": "generate p p > tpm tpm h2",
+                "thq": "generate p p > tpm qpm h2",
+                "thw": "generate p p > tpm wpm h2",
+                "tta": "generate p p > tpm tpm h3",
+                "taq": "generate p p > tpm qpm h3",
+                "taw": "generate p p > tpm wpm h3",
+                }
 
     template = dedent("""
 
@@ -232,6 +264,7 @@ def get_card_2hdm(
     set run_card ebeam2 6500.0
     set run_card nevents {nevents}
 
+
     set run_card use_syst False
 
     set param_card mass 25 125 # h1
@@ -240,6 +273,9 @@ def get_card_2hdm(
     set param_card mass 35 {mass} # H2 / H
     set param_card mass 36 {mass} # H3 / A
     set param_card mass 37 {decouplemass} # charged Hpm
+    set param_card decay 35 Auto
+    set param_card decay 36 Auto
+    {seedstr}
 
     """)
 
@@ -252,6 +288,7 @@ def get_card_2hdm(
             tanbeta=tanbeta,
             decouplemass=decouplemass,
             mgoutputname=mgoutputname,
+            seedstr=seedstr,
             )
 
 
@@ -370,10 +407,16 @@ if __name__ == "__main__":
     do_2hdm = False
     do_dmscalar = False
     do_dmpseudo = False
-    do_dm_test = False
     do_oblique = False
+
+    # testing stuff
+    do_dm_test = True
+    do_2hdm_decay = False
     do_oblique_manyevents = False
-    do_oblique_run2 = True
+    do_oblique_run2 = False
+    do_oblique_tth_test = False
+    do_2hdm_decaytest = False
+    do_2hdm_bigtest = False
 
     os.system("mkdir -p runs")
 
@@ -495,31 +538,81 @@ if __name__ == "__main__":
                 buff = get_card(model=model,ncores=3,nevents=50000,proc=proc,mgoutputname=mgoutputname,carddir=carddir, hhat=hhat,unique_seeds=True)
                 write_card(buff,cardname,dryrun=False)
 
+    if do_oblique_tth_test:
+        model = "oblique"
+        # carddir = "./runs/out_oblique_scan_tthytprop_v1/" # NOTE this has one (1-hhat) term for a single yt, and also propagator modification
+        carddir = "./runs/out_oblique_scan_tthyt_v1/" # NOTE this has one (1-hhat) term for a single yt, and NO other propagator modification
+        os.system("mkdir -p {}".format(carddir))
+        proc = "tth"
+        hhats = [0.0, 0.02, 0.05, 0.08, 0.1, 0.13, 0.15, 0.18, 0.2, 0.25]
+        for hhat in hhats:
+            tag = "{model}_{proc}_{hhat}".format(model=model,proc=proc,hhat=str(hhat).replace(".","p"))
+            mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+            cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+            buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, hhat=hhat)
+            write_card(buff,cardname,dryrun=False)
+
     if do_dm_test:
         for model in ["dmpseudo","dmscalar"]:
             # model = "dmpseudo"
-            carddir = "./runs/out_{}_scan_v3/".format(model)
+            # carddir = "./runs/out_{}_scan_v3/".format(model)
+            # os.system("mkdir -p {}".format(carddir))
+            # for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
+                # for massmed,massdm in list(itertools.product([300,350,400,450,500,600,700],[1,50,100,150,300,500,750])):
+            # carddir = "./runs/out_{}_scan_v4/".format(model)
+            # gdm = 1
+            # gsm = 1
+            carddir = "./runs/out_{}_scan_v5/".format(model)
+            gdm = 0.5
+            gsm = 1
             os.system("mkdir -p {}".format(carddir))
-            for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
-            # for proc in ["ttdm", "sttdm", "stwdm"]:
-                # for massmed,massdm in list(itertools.product([500],[1])):
-                for massmed,massdm in list(itertools.product([300,350,400,450,500,600,700],[1,50,100,150,300,500,750])):
-                # for massmed,massdm in [
-                #         [10,1],
-                #         [20,1],
-                #         [50,1],
-                #         [100,1],
-                #         [200,1],
-                #         [300,1],
-                #         [500,1],
-                #         [1000,1],
-                #         [10,10],
-                #         [300,50],
-                #         ]:
+            for proc in ["ttsm", "sttsm", "stwsm"]:
+                # for massmed,massdm in (
+                #         list(itertools.product([350,370,390,410,430,450,470,490,530],[1,100,200,250,300,600])) +
+                #         list(itertools.product([570,650],[1,200,300,600])) +
+                #         list(itertools.product([350,370,390,410,430],[150])) +
+                #         list(itertools.product([510],[250,300,600])) +
+                #         list(itertools.product([550],[300,600]))
+                #         ):
+                for massmed,massdm in (
+                        list(itertools.product([350,370,390,410,430,450,470,490,530],[1,100,200,600])) +
+                        list(itertools.product([350,390,430,470,490,530],[50])) +
+                        list(itertools.product([490,530,570,650],[1,200,300,600])) +
+                        list(itertools.product([350,370,390,410,430,450,470,490,510],[150])) +
+                        list(itertools.product([550,590],[300,600])) +
+                        list(itertools.product([510],[250,300,600])) +
+                        list(itertools.product([470,490,530],[250]))
+                        ):
                     massdm = max(massdm,1)
                     tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)
                     mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
                     cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
-                    buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, massmed=massmed,massdm=massdm)
+                    buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, massmed=massmed,massdm=massdm,gdm=gdm,gsm=gsm)
                     write_card(buff,cardname,dryrun=False)
 
+    if do_2hdm_decaytest:
+        model = "2hdm"
+        carddir = "./runs/out_2hdm_decay_scan_v2/"
+        os.system("mkdir -p {}".format(carddir))
+        for proc in ["tth","tta","thw","taw","thq","taq"]:
+            for mass in range(350,650+20,20):
+                for tanbeta in [0.2,0.5,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.5,3.0]:
+                    tag = "{model}_{proc}_{mass}_{tanbeta}".format(model=model,proc=proc,mass=mass,tanbeta=str(tanbeta).replace(".","p"))
+                    mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                    cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                    buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,decouplemass=10000,tanbeta=tanbeta,decay=True)
+                    write_card(buff,cardname,dryrun=False)
+
+    if do_2hdm_bigtest:
+        model = "2hdm"
+        carddir = "./runs/out_2hdm_bigdecay_scan_v2/"
+        os.system("mkdir -p {}".format(carddir))
+        mass = 450
+        tanbeta = 1.0
+        for run in range(1,15+1):
+            for proc in ["tth","tta"]:
+                tag = "{model}_{proc}_{mass}_{tanbeta}_{run}".format(model=model,proc=proc,mass=mass,tanbeta=str(tanbeta).replace(".","p"),run=run)
+                mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,decouplemass=10000,tanbeta=tanbeta,decay=True,nevents=100000,unique_seeds=True)
+                write_card(buff,cardname,dryrun=False)
