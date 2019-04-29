@@ -27,6 +27,7 @@ Execute `make_commands.sh runs/*` (or any valid globber) to print out a list of
 commands to run over the cards in the specified folders. Redirect it into a
 file and potentially delete things you don't care about:
 `make_commands.sh runs/* > commands.txt`.
+The script won't print out commands for runs that have already finished.
 
 ### Use GNU parallel to actually run MG
 

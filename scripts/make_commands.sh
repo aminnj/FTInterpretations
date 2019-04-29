@@ -18,6 +18,11 @@ for basedir in $basedirs ; do
         # logname=$(basename $card) # basename is slow
         logname=${card##*/}
         logname=${logname%.*}.log 
+        if [ -e $logdir/$logname ] ; then
+            if grep --quiet "INFO: Done" $logdir/$logname ; then
+                continue
+            fi
+        fi
         echo "./${exe} $card >& $logdir/$logname"
     done
 done
