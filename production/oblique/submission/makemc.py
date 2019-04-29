@@ -20,6 +20,16 @@ d_pset_args = { 2016: "data=False year=2016", 2017: "data=False year=2017 metrec
 d_global_tag = { 2016: "94X_mcRun2_asymptotic_v3", 2017: "94X_mc2017_realistic_v17", 2018: "102X_upgrade2018_realistic_v12", }
 d_special_dir = { 2016: "run2_mc2016_94x/", 2017: "run2_mc2017/", 2018: "run2_mc2018/", }
 
+# ((np.random.random((1000000,4))<0.3258).sum(axis=-1) >= 2).mean()
+filteff = 0.3944
+d_xsec = {
+        0.0 :  filteff*0.001*11.97,
+        0.04 : filteff*0.001*13.72,
+        0.08 : filteff*0.001*17.12,
+        0.12 : filteff*0.001*21.44,
+        0.16 : filteff*0.001*25.95,
+        }
+print d_xsec
 
 total_summary = {}
 tag = "v2"
@@ -48,7 +58,7 @@ for _ in range(100):
                 total_nevents = 50000,
                 # events_per_output = 5,
                 # total_nevents = 10,
-                condor_submit_params = {"sites":"T2_US_UCSD"},
+                condor_submit_params = {"sites":"T2_US_UCSD","classads":[["JobBatchName","GEN_{}_{}".format(year,shortstr)]]},
                 pset = "../commands/{}/pset_gensim.py".format(year),
                 cmssw_version = d_cmssw_version[year]["gensim"],
                 scram_arch = d_scram_arch[year]["gensim"],
@@ -64,7 +74,7 @@ for _ in range(100):
                     ),
                 open_dataset = True,
                 files_per_output = 1,
-                condor_submit_params = {"use_xrootd":True},
+                condor_submit_params = {"classads":[["JobBatchName","RAW_{}_{}".format(year,shortstr)]]},
                 pset = "../commands/{}/pset_raw.py".format(year),
                 cmssw_version = d_cmssw_version[year]["raw"],
                 scram_arch = d_scram_arch[year]["raw"],
@@ -80,7 +90,7 @@ for _ in range(100):
                 open_dataset = True,
                 flush = True,
                 files_per_output = 3,
-                condor_submit_params = {"use_xrootd":True},
+                condor_submit_params = {"classads":[["JobBatchName","AOD_{}_{}".format(year,shortstr)]]},
                 pset = "../commands/{}/pset_aod.py".format(year),
                 cmssw_version = d_cmssw_version[year]["aod"],
                 scram_arch = d_scram_arch[year]["aod"],
@@ -96,7 +106,7 @@ for _ in range(100):
                 open_dataset = True,
                 flush = True,
                 files_per_output = 4,
-                condor_submit_params = {"use_xrootd":True},
+                condor_submit_params = {"classads":[["JobBatchName","MINIAOD_{}_{}".format(year,shortstr)]]},
                 pset = "../commands/{}/pset_miniaod.py".format(year),
                 cmssw_version = d_cmssw_version[year]["miniaod"],
                 scram_arch = d_scram_arch[year]["miniaod"],
@@ -108,6 +118,7 @@ for _ in range(100):
                 sample = DirectorySample(
                     location = miniaod.get_outputdir(),
                     dataset = miniaod.get_sample().get_datasetname(),
+                    xsec=d_xsec[hhat],
                     ),
                 open_dataset = True,
                 flush = True,
@@ -119,14 +130,15 @@ for _ in range(100):
                 pset = "/home/users/namin/2017/ProjectMetis/pset_CMS4_V10-02-04.py",
                 pset_args = d_pset_args[year],
                 global_tag = d_global_tag[year],
-                condor_submit_params = {"sites":"T2_US_UCSD"},
+                condor_submit_params = {"sites":"T2_US_UCSD","classads":[["JobBatchName","CMS4_{}_{}".format(year,shortstr)]]},
                 cmssw_version = "CMSSW_10_2_5",
                 scram_arch = "slc6_amd64_gcc700",
                 tarfile = "/nfs-7/userdata/libCMS3/lib_CMS4_V10-02-05_1025.tar.xz",
                 special_dir = d_special_dir[year],
                 )
 
-        tasks = [lhe,raw,aod,miniaod,cms4]
+        # tasks = [lhe,raw,aod,miniaod,cms4]
+        tasks = [cms4]
         for task in tasks:
             task.process()
             summary = task.get_task_summary()
