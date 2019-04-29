@@ -40,7 +40,7 @@ parallel --nice 10 --jobs 10 --bar --shuf --joblog joblog.txt < commands.txt
 
 ### Collect outputs
 
-`collect.sh` will grep for cross-sections and write out `data.txt` with folder names and cross-sections.
+`collect.sh > data.txt` will grep for cross-sections and write out `data.txt` with folder names and cross-sections.
 
 ### Clean up
 
