@@ -20,6 +20,8 @@ from scipy import interpolate
 import utils
 utils.set_style_defaults()
 
+BDTOBSUL = 22.5
+
 XSEC_TTTT = 11.97
 def parse_yukawa_log(fname):
     d = {}
@@ -146,7 +148,7 @@ def plot_main():
             ).format(*coef[::-1])
     ax.plot(xs,ys,color="k",label=label)
 
-    ul = 22.5/11.97
+    ul = BDTOBSUL/11.97
     # ax.plot([0.,ax.get_xlim()[1]],[ul,ul],label="obs UL (BDT)",color="k",linestyle="--")
     dfy, fyint = get_corrected_ul()
     ax.plot(hhats,np.ones(len(hhats))*ul,label="uncorrected obs UL (BDT)",color="0.6",linestyle="--")
@@ -298,7 +300,7 @@ def plot_tth():
     #         ).format(*coef[::-1])
     # ax.plot(xs,ys,color="k",label=label)
 
-    # ul = 22.5/11.97
+    # ul = BDTOBSUL/11.97
     # ax.plot([0.,ax.get_xlim()[1]],[ul,ul],label="obs UL (BDT)",color="k",linestyle="--")
     # # ax.plot([xcross,xcross],[0.,ul*1.5],linewidth=1.0,color="k",linestyle="--")
 
@@ -393,7 +395,7 @@ def plot_custom():
             ).format(*coef[::-1])
     ax.plot(xs,ys,color="k",label=label)
 
-    ul = 22.5/11.97
+    ul = BDTOBSUL/11.97
     # ax.plot([0.,ax.get_xlim()[1]],[ul,ul],label="obs UL (BDT)",color="k",linestyle="--")
     dfy, fyint = get_corrected_ul()
     ax.plot(hhats,np.ones(len(hhats))*ul,label="uncorrected obs UL (BDT)",color="0.6",linestyle="--")

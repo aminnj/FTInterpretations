@@ -12,46 +12,60 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.ticker import MultipleLocator
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
+
+from scipy import interpolate
 
 import utils
 utils.set_style_defaults()
+
+EXPCOLOR="C3"
+class DoubleBandObject(object): pass
+class DoubleBandObjectHandler(object):
+    def legend_artist(self, legend, orig_handle, fontsize, handlebox):
+        x0, y0 = handlebox.xdescent, handlebox.ydescent
+        width, height = handlebox.width, handlebox.height
+        patch = mlines.Line2D(
+                [x0+width*0.03,x0+width-width*0.03],[y0+height*0.5],
+                linestyle=(-0.5,(2.6,1.6)), linewidth=1.5,marker="",color=EXPCOLOR,
+                transform=handlebox.get_transform(),
+                )
+        handlebox.add_artist(patch)
+        patch = mlines.Line2D(
+                [x0+width*0.03,x0+width-width*0.03],[y0+height*1.0],
+                linestyle=(2,(1.5,0.8)), linewidth=1.5,marker="",color=EXPCOLOR,
+                transform=handlebox.get_transform(),
+                )
+        handlebox.add_artist(patch)
+        patch = mlines.Line2D(
+                [x0+width*0.03,x0+width-width*0.03],[y0+height*0.0],
+                linestyle=(2,(1.5,0.8)), linewidth=1.5,marker="",color=EXPCOLOR,
+                transform=handlebox.get_transform(),
+                )
+        handlebox.add_artist(patch)
+        return patch
+
+def grid(x, y, z, resX=100j, resY=100j):
+    from scipy.interpolate import griddata
+    xi, yi = np.mgrid[min(x):max(x):resX, min(y):max(y):resY]
+    Z = griddata((x, y), z, (xi[None,:], yi[None,:]), method="linear")
+    Z = Z[0]
+    return xi, yi, Z
 
 import ROOT as r
 r.gROOT.SetBatch()
 r.gStyle.SetOptStat(0)
 f = r.TFile("mh125_align_13.root")
-m_H = f.Get("m_H")
-br_A_tt = f.Get("br_A_tt")
 br_H_tt = f.Get("br_H_tt")
-# if True:
-#     # m_H is a 2D histogram with x=mA, y=tanbeta, z=mH
-#     # we want to make m_A which is a 2D histogram with x=mH, y=tanbeta, z=mA
-#     xaxis = m_H.GetXaxis()
-#     yaxis = m_H.GetYaxis()
-#     m_A = r.TH2F("m_A","m_A",85,150,1000,38,0.99,20.1)
-#     for ix in tqdm(range(1,m_H.GetNbinsX()+1)):
-#         for iy in range(1,m_H.GetNbinsY()+1):
-#             z = m_H.GetBinContent(ix,iy)
-#             x = xaxis.GetBinCenter(ix)
-#             y = yaxis.GetBinCenter(iy)
-#             m_A.SetBinContent(m_A.FindBin(z,y),x)
 def get_br(proc,mass,tanbeta=1.,convert_mh=False):
     if tanbeta < 1.: return 1.0
-    if "a" in proc:
-        return br_A_tt.GetBinContent(br_A_tt.FindBin(mass,tanbeta))
-    elif "h" in proc:
-        if convert_mh:
-            # BR histograms have m_A on xaxis, so we have to convert mH to mA value first
-            mass = m_A.GetBinContent(m_A.FindBin(mass,tanbeta))
-        return br_H_tt.GetBinContent(br_H_tt.FindBin(mass,tanbeta))
-    else:
-        raise Exception("WTF are you doing?")
-
+    return br_H_tt.GetBinContent(br_H_tt.FindBin(mass,tanbeta))
 
 def get_df(already_decayed=False,apply_br=True):
 
     if already_decayed:
-        df = utils.load_data("../data_Apr18.txt")
+        df = utils.load_data("data/data_Apr18.txt")
         df = df[df.folder.str.contains("2hdm_decay_scan_v2")]
         df  = df.drop(["folder"],axis=1)
         # print df.folder
@@ -102,171 +116,195 @@ def get_df(already_decayed=False,apply_br=True):
 
     return dfc
 
-dfc = get_df()
-# dfc_dec = get_df(already_decayed=True,apply_br=False)
+if __name__ == "__main__":
 
-# dfc["brmgratio_h"] = dfc_dec["xsec_h"]/dfc["xsec_h"]
-# dfc["brmgratio_a"] = dfc_dec["xsec_a"]/dfc["xsec_a"]
-# print dfc
+    dfc = get_df()
 
-print "Dumped json!"
-dfc.to_json("xsecs_2hdm.json")
+    # dfc_dec = get_df(already_decayed=True,apply_br=False)
+    # dfc["brmgratio_h"] = dfc_dec["xsec_h"]/dfc["xsec_h"]
+    # dfc["brmgratio_a"] = dfc_dec["xsec_a"]/dfc["xsec_a"]
+    # # print dfc
 
-for key in [
-        # "brmgratio_h",
-        # "brmgratio_a",
-        "xsec_h",
-        "xsec_a",
-        # "stfrac_h",
-        # "stfrac_a",
-        ]:
-    fig,ax = plt.subplots()
-    # key = "xsec_h"
-    # ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=dfc[key].min(), vmax=dfc[key].max()),
-    # ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=1.5*1e-3,vmax=500*1e-3),
-    ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],
-            norm=mpl.colors.LogNorm(vmin=1.5*1e-3,vmax=500*1e-3),
-                       cmap='cividis')
-                       # cmap='PuBu')
-                       # cmap='copper')
-                       # cmap='kRainbow')
+    print "Dumped json!"
+    dfc.to_json("xsecs_2hdm.json")
 
-    if "frac" in key:
-        for i,(m,tb,val) in dfc[["mass","tanbeta",key]].iterrows():
-            s = "{:.2f}".format(val)
-            ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
-            # print m,tb,xsec
-        # plt.colorbar()
-    elif "ratio" in key:
-        for i,(m,tb,val) in dfc[["mass","tanbeta",key]].iterrows():
-            s = "{:.3f}".format(val)
-            ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
-            # print m,tb,xsec
-        # plt.colorbar()
-    else:
-        for i,(m,tb,xsec) in dfc[["mass","tanbeta",key]].iterrows():
-            xsec = xsec*1e3
-            if xsec >= 100.:
-                s = "{:.0f}".format(xsec)
-            elif xsec >= 10.:
-                s = "{:.1f}".format(xsec)
-            elif xsec >= 1.:
-                s = "{:.2f}".format(xsec)
+    do_plot_xsecs_2d = True
+    do_plot_xsecs_1d = False
+    do_plot_tanbeta_exclusion = False
+
+    if do_plot_xsecs_2d:
+        for key in [
+                # "brmgratio_h",
+                # "brmgratio_a",
+                "xsec_h",
+                "xsec_a",
+                # "stfrac_h",
+                # "stfrac_a",
+                ]:
+            fig,ax = plt.subplots()
+            # key = "xsec_h"
+            # ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=dfc[key].min(), vmax=dfc[key].max()),
+            # ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],norm=mpl.colors.LogNorm(vmin=1.5*1e-3,vmax=500*1e-3),
+            ax.scatter(dfc["mass"],dfc["tanbeta"],c=dfc[key],
+                    norm=mpl.colors.LogNorm(vmin=1.5*1e-3,vmax=500*1e-3),
+                               cmap='cividis')
+                               # cmap='PuBu')
+                               # cmap='copper')
+                               # cmap='kRainbow')
+
+            if "frac" in key:
+                for i,(m,tb,val) in dfc[["mass","tanbeta",key]].iterrows():
+                    s = "{:.2f}".format(val)
+                    ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
+                    # print m,tb,xsec
+                # plt.colorbar()
+            elif "ratio" in key:
+                for i,(m,tb,val) in dfc[["mass","tanbeta",key]].iterrows():
+                    s = "{:.3f}".format(val)
+                    ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
+                    # print m,tb,xsec
+                # plt.colorbar()
             else:
-                s = "{:.3f}".format(xsec)
-            ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
-            # print m,tb,xsec
-        # plt.colorbar()
+                for i,(m,tb,xsec) in dfc[["mass","tanbeta",key]].iterrows():
+                    xsec = xsec*1e3
+                    if xsec >= 100.:
+                        s = "{:.0f}".format(xsec)
+                    elif xsec >= 10.:
+                        s = "{:.1f}".format(xsec)
+                    elif xsec >= 1.:
+                        s = "{:.2f}".format(xsec)
+                    else:
+                        s = "{:.3f}".format(xsec)
+                    ax.text(m,tb+0.04,s,fontsize=8,horizontalalignment="center",verticalalignment="bottom")
+                    # print m,tb,xsec
+                # plt.colorbar()
 
-    if "_h" in key:
-        title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+H) $\times$ BR(H$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
-    else:
-        title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+A) $\times$ BR(A$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
-    text = ax.set_title(title)
-    ax.set_xlim([340.,660.])
-    ax.set_ylabel(r"$\tan\beta$")
-    ax.set_xlabel("mass (GeV)")
+            if "_h" in key:
+                title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+H) $\times$ BR(H$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
+            else:
+                title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+A) $\times$ BR(A$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
+            text = ax.set_title(title)
+            ax.set_xlim([340.,660.])
+            ax.set_ylabel(r"$\tan\beta$")
+            ax.set_xlabel("mass (GeV)")
 
-    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-    ax.xaxis.set_minor_locator(MultipleLocator(10.))
-
-
-    fig.set_tight_layout(True)
-    fname = "plots/plot_2d_2hdm_{}.png".format(key)
-    fig.savefig(fname)
-    fig.savefig(fname.replace(".png",".pdf"))
-    os.system("ic "+fname)
-    # for _ in range(10):
-    #     print "Actually include BR(tt)!!!"
-
-fig,ax = plt.subplots()
-key = "xsec_h"
-ax.plot(dfc[dfc.tanbeta==1.4]["mass"],1e3*dfc[dfc.tanbeta==1.4][key],label=r"$\tan\beta=1.4$ (H)",marker="o",linestyle="-",color="C0",markersize=5.0)
-ax.plot(dfc[dfc.tanbeta==1.0]["mass"],1e3*dfc[dfc.tanbeta==1.0][key],label=r"$\tan\beta=1.0$ (H)",marker="o",linestyle="-",color="C3",markersize=5.0)
-ax.plot(dfc[dfc.tanbeta==0.8]["mass"],1e3*dfc[dfc.tanbeta==0.8][key],label=r"$\tan\beta=0.8$ (H)",marker="o",linestyle="-",color="C2",markersize=5.0)
-# ax.plot(dfc[dfc.tanbeta==0.5]["mass"],1e3*dfc[dfc.tanbeta==0.5][key],label=r"$\tan\beta=0.5$ (H)",marker="o",linestyle="-",color="C3",markersize=5.0)
-
-key = "xsec_a"
-ax.plot(dfc[dfc.tanbeta==1.4]["mass"],1e3*dfc[dfc.tanbeta==1.4][key],label=r"$\tan\beta=1.4$ (A)",marker="v",linestyle="--",color="C0",markersize=5.0)
-ax.plot(dfc[dfc.tanbeta==1.0]["mass"],1e3*dfc[dfc.tanbeta==1.0][key],label=r"$\tan\beta=1.0$ (A)",marker="v",linestyle="--",color="C3",markersize=5.0)
-ax.plot(dfc[dfc.tanbeta==0.8]["mass"],1e3*dfc[dfc.tanbeta==0.8][key],label=r"$\tan\beta=0.8$ (A)",marker="v",linestyle="--",color="C2",markersize=5.0)
-# ax.plot(dfc[dfc.tanbeta==0.5]["mass"],1e3*dfc[dfc.tanbeta==0.5][key],label=r"$\tan\beta=0.5$ (A)",marker="v",linestyle="--",color="C3",markersize=5.0)
-ax.legend(ncol=2,fontsize=10.)
-ax.set_ylim([5.,150.])
-ax.set_yscale("log")
-title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+X) $\times$ BR(X$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
-text = ax.set_title(title)
-ax.set_xlim([340.,660.])
-ax.set_ylabel(r"$\sigma\times$BR (fb)")
-ax.set_xlabel("mass (GeV)")
-
-# ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-ax.xaxis.set_minor_locator(MultipleLocator(10.))
-# ax.set_xlim([340.,660.])
-# ax.set_ylabel(r"$\tan\beta$")
-# ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-# ax.xaxis.set_minor_locator(MultipleLocator(10.))
-
-# fig.set_tight_layout(True)
-# fig.savefig("plots/test.png")
-# os.system("ic plots/test.png")
-
-fig.set_tight_layout(True)
-fname = "plots/plot_1d_2hdm_xsec.png".format(key)
-fig.savefig(fname)
-fig.savefig(fname.replace(".png",".pdf"))
-os.system("ic "+fname)
+            ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+            ax.xaxis.set_minor_locator(MultipleLocator(10.))
 
 
+            fig.set_tight_layout(True)
+            fname = "plots/plot_2d_2hdm_{}.png".format(key)
+            fig.savefig(fname)
+            fig.savefig(fname.replace(".png",".pdf"))
+            os.system("ic "+fname)
 
-# fig,ax = plt.subplots()
-# tb = 2.0
-# key = "br_h"
-# ax.plot(dfc[dfc.tanbeta==tb]["mass"],dfc[dfc.tanbeta==tb][key],label=r"$\tan\beta=1.0$ (H)",marker="o",linestyle="-",color="C3",markersize=5.0)
-# key = "br_a"
-# ax.plot(dfc[dfc.tanbeta==tb]["mass"],dfc[dfc.tanbeta==tb][key],label=r"$\tan\beta=1.0$ (A)",marker="v",linestyle="--",color="C3",markersize=5.0)
-# ax.legend(ncol=2,fontsize=10.)
-# ax.set_ylim([0.,1.])
-# # ax.set_yscale("log")
-# title = r"BR(X$\rightarrow$ t$\bar{\mathrm{t}}$)"
-# text = ax.set_title(title)
-# ax.set_xlim([340.,660.])
-# ax.set_ylabel(r"BR")
-# ax.set_xlabel("mass (GeV)")
-# # ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-# ax.xaxis.set_minor_locator(MultipleLocator(10.))
-# # ax.set_xlim([340.,660.])
-# # ax.set_ylabel(r"$\tan\beta$")
-# # ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-# # ax.xaxis.set_minor_locator(MultipleLocator(10.))
-# fig.set_tight_layout(True)
-# fig.savefig("plots/test.png")
-# os.system("ic plots/test.png")
+    if do_plot_xsecs_1d:
 
-# fig,ax = plt.subplots()
-# # mass = 550
-# from itertools import cycle
-# colors = cycle(["C0","C1","C2","C3","C4"])
-# for mass in [450,470,490,510,530]:
-#     color = next(colors)
-#     key = "br_h"
-#     ax.plot(dfc[dfc.mass==mass]["tanbeta"],dfc[dfc.mass==mass][key],label=r"mass = {} (H)".format(mass),marker="o",linestyle="-",color=color,markersize=5.0)
-#     key = "br_a"
-#     ax.plot(dfc[dfc.mass==mass]["tanbeta"],dfc[dfc.mass==mass][key],label=r"mass = {} (A)".format(mass),marker="v",linestyle="--",color=color,markersize=5.0)
-# ax.legend(ncol=2,fontsize=10.)
-# # ax.set_ylim([0.,1.])
-# # ax.set_yscale("log")
-# title = r"BR(X$\rightarrow$ t$\bar{\mathrm{t}}$)"
-# text = ax.set_title(title)
-# # ax.set_xlim([340.,660.])
-# ax.set_ylabel(r"BR")
-# ax.set_xlabel(r"tan$\beta$")
-# # ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-# ax.xaxis.set_minor_locator(MultipleLocator(10.))
-# # ax.set_xlim([340.,660.])
-# # ax.set_ylabel(r"$\tan\beta$")
-# # ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-# # ax.xaxis.set_minor_locator(MultipleLocator(10.))
-# fig.set_tight_layout(True)
-# fig.savefig("plots/test.png")
-# os.system("ic plots/test.png")
+        fig,ax = plt.subplots()
+        key = "xsec_h"
+        ax.plot(dfc[dfc.tanbeta==1.4]["mass"],1e3*dfc[dfc.tanbeta==1.4][key],label=r"$\tan\beta=1.4$ (H)",marker="o",linestyle="-",color="C0",markersize=5.0)
+        ax.plot(dfc[dfc.tanbeta==1.0]["mass"],1e3*dfc[dfc.tanbeta==1.0][key],label=r"$\tan\beta=1.0$ (H)",marker="o",linestyle="-",color="C3",markersize=5.0)
+        ax.plot(dfc[dfc.tanbeta==0.8]["mass"],1e3*dfc[dfc.tanbeta==0.8][key],label=r"$\tan\beta=0.8$ (H)",marker="o",linestyle="-",color="C2",markersize=5.0)
+        # ax.plot(dfc[dfc.tanbeta==0.5]["mass"],1e3*dfc[dfc.tanbeta==0.5][key],label=r"$\tan\beta=0.5$ (H)",marker="o",linestyle="-",color="C3",markersize=5.0)
+
+        key = "xsec_a"
+        ax.plot(dfc[dfc.tanbeta==1.4]["mass"],1e3*dfc[dfc.tanbeta==1.4][key],label=r"$\tan\beta=1.4$ (A)",marker="v",linestyle="--",color="C0",markersize=5.0)
+        ax.plot(dfc[dfc.tanbeta==1.0]["mass"],1e3*dfc[dfc.tanbeta==1.0][key],label=r"$\tan\beta=1.0$ (A)",marker="v",linestyle="--",color="C3",markersize=5.0)
+        ax.plot(dfc[dfc.tanbeta==0.8]["mass"],1e3*dfc[dfc.tanbeta==0.8][key],label=r"$\tan\beta=0.8$ (A)",marker="v",linestyle="--",color="C2",markersize=5.0)
+        # ax.plot(dfc[dfc.tanbeta==0.5]["mass"],1e3*dfc[dfc.tanbeta==0.5][key],label=r"$\tan\beta=0.5$ (A)",marker="v",linestyle="--",color="C3",markersize=5.0)
+        ax.legend(ncol=2,fontsize=10.)
+        ax.set_ylim([5.,150.])
+        # ax.set_yscale("log")
+        title = r"$\sigma$(pp$\rightarrow$ (t$\bar{\mathrm{t}}$,tW,tq)+X) $\times$ BR(X$\rightarrow$ t$\bar{\mathrm{t}}$) (fb)"
+        text = ax.set_title(title)
+        ax.set_xlim([340.,660.])
+        ax.set_ylabel(r"$\sigma\times$BR (fb)")
+        ax.set_xlabel("mass (GeV)")
+
+        # ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+        ax.xaxis.set_minor_locator(MultipleLocator(10.))
+        # ax.set_xlim([340.,660.])
+        # ax.set_ylabel(r"$\tan\beta$")
+        # ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+        # ax.xaxis.set_minor_locator(MultipleLocator(10.))
+
+        fig.set_tight_layout(True)
+        fname = "plots/plot_1d_2hdm_xsec.png".format(key)
+        fig.savefig(fname)
+        fig.savefig(fname.replace(".png",".pdf"))
+        os.system("ic "+fname)
+
+
+    if do_plot_tanbeta_exclusion:
+
+        for particle in list("ahb"):
+
+            # particle = "b"
+            xseckey = "xsec_{}".format(particle.lower())
+
+            dful = pd.read_json("../../../analysis/limits/dump_higgs_{}.json".format(particle.lower()))
+            dful = dful.sort_values(["mass"])
+
+
+            x = dfc["mass"].values
+            y = dfc["tanbeta"].values
+            z = dfc[xseckey].values
+
+            for k in ["obsr","exprm2","exprm1","expr","exprp1","exprp2"]:
+                dful["new_"+k.replace("r","")] = dful[k]*(dfc[dfc.tanbeta==1.][xseckey]).values
+
+            for k in ["obs","expm2","expm1","exp","expp1","expp2"]:
+                edges = []
+                for mass in sorted(dful.mass.unique()):
+                    ul = dful[np.abs(dful.mass-mass)<0.01]["new_"+k].values[0]
+                    dftmp = dfc[np.abs(dfc.mass-mass)<0.01]
+                    xs = dftmp["tanbeta"]
+                    ys = dftmp[xseckey]
+                    fint = interpolate.interp1d(xs,ys)
+                    big_xy = np.c_[np.linspace(xs.min(),xs.max(),1000),fint(np.linspace(xs.min(),xs.max(),1000))]
+                    tbcross = big_xy[np.abs(big_xy[:,1]-ul).argmin()][0]
+                    edges.append([mass,tbcross])
+                dful["tb_"+k] = np.array(edges)[:,1]
+
+            X, Y, Z = grid(x,y,z)
+
+            fig,ax = plt.subplots()
+
+            masses = dful["mass"]
+            pe1 = ax.fill_between(masses, dful["tb_obs"]*0., dful["tb_obs"], linewidth=0., facecolor="0.5", alpha=0.4)
+            pe0 = ax.plot(masses,dful["tb_exp"], linestyle=(0,(5,3)), linewidth=2.,marker="",color=EXPCOLOR,solid_capstyle="butt")
+            pep1 = ax.plot(masses,dful["tb_expm1"], linestyle=(0,(2,1)), linewidth=2.,marker="",color=EXPCOLOR,solid_capstyle="butt")
+            pem1 = ax.plot(masses,dful["tb_expp1"], linestyle=(0,(2,1)), linewidth=2.,marker="",color=EXPCOLOR,solid_capstyle="butt")
+            pobs = ax.plot(masses,dful["tb_obs"], linestyle="-", linewidth=2.,markersize=0.,marker="o",color="k",solid_capstyle="butt")
+            obspatch = mpatches.Rectangle([0,0], 1, 1, facecolor="0.8", # alpha*(facecolor-1)+1 of regular fill_between, to emulate non-unity alpha
+                                       edgecolor="k", lw=1.,)
+
+            particletext = particle.upper().replace("B","H/A")
+            ax.set_title(r"$\sigma(pp\rightarrow tX{particle}\rightarrow t\bar{{t}})\times BR({particle}\rightarrow t\bar{{t}})$".format(particle=particletext))
+            ax.set_xlabel(r"$m_{{{particle}}}$ [GeV]".format(particle=particletext))
+            ax.set_ylabel(r"$\tan\beta$")
+
+            ax.set_ylim([0.,5.])
+            ax.yaxis.set_minor_locator(MultipleLocator(0.2))
+            ax.xaxis.set_minor_locator(MultipleLocator(10.))
+
+            legend = ax.legend(
+                    [
+                        (obspatch),
+                        DoubleBandObject(),
+                        ],
+                        [
+                        "95% CL Observed exclusion",
+                        r"95% CL Expected exclusion $\pm$1 $\sigma$",
+                        ],
+                    handler_map={DoubleBandObject: DoubleBandObjectHandler()},
+                    # handlelength=2.0,
+                    labelspacing=0.6,
+                    )
+
+            fig.tight_layout()
+            fname = "plots/plot_2d_2hdm_tanbetaexclusion_{}.png".format(particle)
+            fig.savefig(fname)
+            fig.savefig(fname.replace(".png",".pdf"))
+            os.system("ic "+fname)
+

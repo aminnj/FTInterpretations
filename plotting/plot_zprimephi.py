@@ -19,6 +19,8 @@ from scipy import interpolate
 import utils
 utils.set_style_defaults()
 
+BDTOBSULWEAKER = 23.0 # Note, this was calculated with an extra 10% normalization uncertainty for signal
+
 class OneSideHatchObject1(object): pass
 class OneSideHatchObject2(object): pass
 class OneSideHatchObjectHandler(object):
@@ -41,7 +43,7 @@ class OneSideHatchObjectHandler(object):
         handlebox.add_artist(patch)
         return patch
 
-def plot_crossings(df, ul=22.5/11.97*12.32/12.32,which="phi"):
+def plot_crossings(df, ul=BDTOBSULWEAKER/11.97*12.32/12.32,which="phi"):
     fig, ax = plt.subplots(nrows=1, ncols=1)
     edges = []
     for mass in sorted(df["mass"].unique()):
@@ -176,7 +178,7 @@ def plot_2d_both(edges_zprime,edges_phi):
 if __name__ == "__main__":
 
     # FIXME is this right? it just gives the r value which has OUR xsec!!
-    ul = (23.0/11.97*12.32)/12.32
+    ul = (BDTOBSULWEAKER/11.97*12.32)/12.32
     # Scale our UL to their xsec
     # sigma_obs_prime = sigma_obs_ours / sigma_theory_ours * sigma_theory_theirs
     # Then compute sigma(np+sm)/sigma(sm) ratio

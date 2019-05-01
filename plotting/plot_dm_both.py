@@ -72,9 +72,9 @@ utils.set_style_defaults()
 # grep "Integrated weight" runs/out_dm*v4/*/Events/run_01/run_01_tag_1_banner.txt > data_dm_v4.txt
 def get_df(g11=True):
     if g11:
-        df = utils.load_data("../data_dm_v4.txt")
+        df = utils.load_data("data/data_dm_v4.txt")
     else:
-        df = utils.load_data("../data_dm_v5.txt")
+        df = utils.load_data("data/data_dm_v5.txt")
 
     df = df[df.tag.str.contains("dmscalar") | df.tag.str.contains("dmpseudo")]
     print df.tag

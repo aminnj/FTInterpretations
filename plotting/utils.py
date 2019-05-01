@@ -46,7 +46,7 @@ def set_style_defaults():
     # pdf.fonttype       : 3         ## Output Type 3 (Type3) or Type 42 (TrueType)
     # pdf.use14corefonts : False
 
-def load_data(fname="../data.txt"):
+def load_data(fname="data/data.txt"):
     data = []
     with open(fname,"r") as fh:
         for line in fh:
