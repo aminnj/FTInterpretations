@@ -141,6 +141,8 @@ def grid(x, y, z, resX=100j, resY=100j):
 dfc1 = get_df(g11=True)
 dfc2 = get_df(g11=False)
 
+# dfc1 = get_df(g11=False) # FIXME this is a duplicate. delete this eventually
+
 # # print dfc1
 # compdf = dfc1.merge(dfc2,suffixes=["_1","_g"],on=["which","massmed","massdm"],how="inner")
 # compdf = compdf[["which","massmed","massdm","xsec_ttsm_1","xsec_ttsm_g"]]
@@ -161,7 +163,7 @@ dfc2 = get_df(g11=False)
 
 # sys.exit()
 
-do_scatter = False
+do_scatter = True
 for which in [
         "dmscalar",
         "dmpseudo",
@@ -186,6 +188,7 @@ for which in [
 
         if do_scatter:
             ax.scatter(df1["massmed"],df1["massdm"],c=df1[key],
+            # ax.scatter(df2["massmed"],df2["massdm"],c=df2[key],
                     # norm=mpl.colors.LogNorm(vmin=1.5*1e-4,vmax=200*1e-3),
                     norm=mpl.colors.LogNorm(
                         vmin=max(df1[key].min(),0.001),
@@ -209,16 +212,13 @@ for which in [
                 exprval = fintuls_exp[which](np.clip(massmed,dful["mass"].min(),dful["mass"].max()))/xsec
                 obsrval = fintuls_obs[which](np.clip(massmed,dful["mass"].min(),dful["mass"].max()))/xsec
                 if not np.isfinite(xsec): continue
-                if xsec >= 100.:
-                    s = "{:.0f}".format(xsec)
-                elif xsec >= 10.:
-                    s = "{:.1f}".format(xsec)
-                elif xsec >= 1.:
-                    s = "{:.1f}".format(xsec)
-                else:
-                    s = "{:.2f}".format(xsec)
+                if xsec >= 100.: s = "{:.0f}".format(xsec)
+                elif xsec >= 10.: s = "{:.1f}".format(xsec)
+                elif xsec >= 1.: s = "{:.1f}".format(xsec)
+                else: s = "{:.2f}".format(xsec)
                 # # FIXME
                 # s = "{:.2f}".format(exprval)
+                s = "{:.2f}".format(obsrval)
                 data_rvals1.append([massmed,massdm,exprval,obsrval])
                 if do_scatter:
                     ax.text(massmed,massdm+8.,s,fontsize=6,horizontalalignment="center",verticalalignment="bottom",color=color)
@@ -275,76 +275,90 @@ for which in [
             X2, Y2, Zexp2 = grid(x,y,zexp2)
             _, _, Zobs2 = grid(x,y,zobs2)
 
-            levels = np.array([0.0,1.,50.])
-            csexp1 = ax.contour(X1,Y1,Zexp1, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
-            csobs1 = ax.contour(X1,Y1,Zobs1, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
-
-            levels = np.array([0.0,1.,50.])
-            csexp2 = ax.contour(X2,Y2,Zexp2, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
-            csobs2 = ax.contour(X2,Y2,Zobs2, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
-
-            ########################################
-            ################ # 0.5 #################
-            ########################################
-
-            edges = csexp2.allsegs[0][0]
-            # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
-            if zexp2[np.argmin(np.hypot(x,y))] < 1.:
-                edges = np.vstack([[350.,maxy],[350.,miny],edges])
-            else:
-                edges = np.vstack([[350.,edges[:,0].min()],[350.,edges[:,0].min()],edges])
-            edges[:,1][edges[:,1] == 0] -= 50. # make y=0 line go below 0
-            edges[0][1] = maxy
-            edges[-1][1] = maxy
-            edgecolor=tuple(np.array([30,139,228])/255.)
-            # pfobs = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.15]))
-            ppobs = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="--", marker="",color=tuple(list(edgecolor)+[1.0]))
-            color_exp = edgecolor
-
-            edges = csobs2.allsegs[0][0]
-            # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
-            if zobs2[np.argmin(np.hypot(x,y))] < 1.:
-                edges = np.vstack([[350.,maxy],[350.,miny],edges])
-            else:
-                edges = np.vstack([[350.,edges[:,0].min()],[350.,edges[:,0].min()],edges])
-            edges[:,1][edges[:,1] == 0] -= 50. # make y=0 line at zero go below 0
-            edges[0][1] = maxy
-            edges[-1][1] = maxy
-            edgecolor=tuple(np.array([52,63,62])/255.)
-            # pfexp = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.30]))
-            ppexp = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="--", marker="",color=tuple(list(edgecolor)+[1.0]))
-            color_obs = edgecolor
 
 
-            ########################################
-            ################ # 1.0 #################
-            ########################################
+            if True:
+                ########################################
+                ################ # 0.5 #################
+                ########################################
 
-            edges = csexp1.allsegs[0][0]
-            # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
-            if zexp1[np.argmin(np.hypot(x,y))] < 1.:
-                edges = np.vstack([[350.,maxy],[350.,miny],edges])
-            else:
-                edges = np.vstack([[350.,edges[:,0].min()],[350.,edges[:,0].min()],edges])
-            edges[0][1] = maxy
-            edges[-1][1] = maxy
-            edgecolor=tuple(np.array([30,139,228])/255.)
-            pfobs = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.15]))
-            ppobs = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="-", marker="",color=tuple(list(edgecolor)+[1.0]))
-            color_exp = edgecolor
+                levels = np.array([0.0,1.,50.])
+                csexp2 = ax.contour(X2,Y2,Zexp2, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
+                csobs2 = ax.contour(X2,Y2,Zobs2, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
 
-            edges = csobs1.allsegs[0][0]
-            # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
-            if zobs1[np.argmin(np.hypot(x,y))] < 1.:
-                edges = np.vstack([[350.,maxy],[350.,miny],edges])
-            else:
-                edges = np.vstack([[350.,edges[:,0].min()],[350.,edges[:,0].min()],edges])
-            edges[0][1] = maxy
-            edges[-1][1] = maxy
-            edgecolor=tuple(np.array([52,63,62])/255.)
-            pfexp = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.30]))
-            ppexp = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="-", marker="",color=tuple(list(edgecolor)+[1.0]))
-            color_obs = edgecolor
+                edges = csexp2.allsegs[0][0]
+                # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
+                if zexp2[np.argmin(np.hypot(x,y))] < 1.:
+                    edges = np.vstack([[350.,maxy],[350.,miny],edges])
+                else:
+                    edges = np.vstack( [ np.array(edges[0]), np.array(edges[0]), edges ])
+                edges[:,1][edges[:,1] == 0] -= 50. # make y=0 line go below 0
+                edges[0][1] = maxy
+                edges[-1][1] = maxy
+                edgecolor=tuple(np.array([30,139,228])/255.)
+                # pfobs = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.15]))
+                ppobs = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="--", marker="",color=tuple(list(edgecolor)+[1.0]))
+                color_exp = edgecolor
+
+                edges = csobs2.allsegs[0][0]
+                # sometimes the contour is split into two "levels"?
+                if len(csobs2.allsegs[0]) > 1:
+                    edges = np.vstack([edges, csobs2.allsegs[0][1]])
+                # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
+                if zobs2[np.argmin(np.hypot(x,y))] < 1.:
+                    edges = np.vstack([[350.,maxy],[350.,miny],edges])
+                else:
+                    edges = np.vstack( [ np.array(edges[0]), np.array(edges[0]), edges ])
+                edges[:,1][edges[:,1] == 0] -= 50. # make y=0 line at zero go below 0
+                edges[0][1] = maxy
+                edges[-1][1] = maxy
+                edgecolor=tuple(np.array([52,63,62])/255.)
+                # pfexp = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.30]))
+                ppexp = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="--", marker="",color=tuple(list(edgecolor)+[1.0]))
+                color_obs = edgecolor
+
+
+            if True:
+                ########################################
+                ################ # 1.0 #################
+                ########################################
+
+                levels = np.array([0.0,1.,50.])
+                csexp1 = ax.contour(X1,Y1,Zexp1, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
+                csobs1 = ax.contour(X1,Y1,Zobs1, levels=levels, alpha=0) #, colors="r") #, colors=None,alpha=0.0)
+
+
+                edges = csexp1.allsegs[0][0]
+                # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
+                # if zexp1[np.argmin(np.hypot(x,y))] < 1.:
+                if zexp1[np.argmin(np.hypot(x,y))] < 1.:
+                    edges = np.vstack([[350.,maxy],[350.,miny],edges])
+                else:
+                    edges = np.vstack( [ np.array(edges[0]), np.array(edges[0]), edges ])
+                edges[0][1] = maxy
+                edges[-1][1] = maxy
+                edgecolor=tuple(np.array([30,139,228])/255.)
+                pfobs = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.15]))
+                ppobs = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="-", marker="",color=tuple(list(edgecolor)+[1.0]))
+                color_exp = edgecolor
+
+                edges = csobs1.allsegs[0][0]
+                # sometimes the contour is split into two "levels"?
+                if len(csobs1.allsegs[0]) > 1:
+                    edges = np.vstack([edges, csobs1.allsegs[0][1]])
+                # if the bottom left most point is excluded, sometimes the contour doesn't extend there, so add points at 350 manually
+                if zobs1[np.argmin(np.hypot(x,y))] < 1.:
+                    edges = np.vstack([[350.,maxy],[350.,miny],edges])
+                else:
+                    # pass
+                    edges = np.vstack( [ np.array(edges[0]), np.array(edges[0]), edges ])
+                    # print edges
+                edges[0][1] = maxy
+                edges[-1][1] = maxy
+                edgecolor=tuple(np.array([52,63,62])/255.)
+                pfexp = ax.fill_between(edges[:,0], edges[:,1], maxy*np.ones(len(edges)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=tuple(list(edgecolor)+[0.30]))
+                ppexp = ax.plot(edges[:,0], edges[:,1], linewidth=1.5, linestyle="-", marker="",color=tuple(list(edgecolor)+[1.0]))
+                color_obs = edgecolor
 
             legend = ax.legend(
                     [
@@ -394,5 +408,10 @@ for which in [
         fig.savefig(fname)
         fig.savefig(fname.replace(".png",".pdf"))
         os.system("ic "+fname)
+
+# print "Webbing: web plots/plot_2d_dmscalar_xsec_totsm_bothcouplings_scatter.pdf"
+# os.system("web plots/plot_2d_dmscalar_xsec_totsm_bothcouplings_scatter.pdf")
+# print "Webbing: web plots/plot_2d_dmpseudo_xsec_totsm_bothcouplings_scatter.pdf"
+# os.system("web plots/plot_2d_dmpseudo_xsec_totsm_bothcouplings_scatter.pdf")
 
 

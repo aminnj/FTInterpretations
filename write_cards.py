@@ -175,6 +175,7 @@ def get_card_dmpseudo(
     set auto_update 0
     set run_mode 2
     set nb_core {ncores}
+    set lhapdf /cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/lhapdf6/6.1.5-cms/bin/lhapdf-config
 
     import model DMPseudo
 
@@ -576,12 +577,13 @@ if __name__ == "__main__":
                 #         ):
                 for massmed,massdm in (
                         list(itertools.product([350,370,390,410,430,450,470,490,530],[1,100,200,600])) +
-                        list(itertools.product([350,390,430,470,490,530],[50])) +
+                        list(itertools.product([350,370,390,410,430,470,490,530],[50])) +
                         list(itertools.product([490,530,570,650],[1,200,300,600])) +
                         list(itertools.product([350,370,390,410,430,450,470,490,510],[150])) +
                         list(itertools.product([550,590],[300,600])) +
                         list(itertools.product([510],[250,300,600])) +
-                        list(itertools.product([470,490,530],[250]))
+                        list(itertools.product([450,470,490,530],[250])) +
+                        list(itertools.product([450,470],[300]))
                         ):
                     massdm = max(massdm,1)
                     tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)
