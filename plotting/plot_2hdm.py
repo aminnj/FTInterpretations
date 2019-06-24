@@ -56,11 +56,20 @@ def grid(x, y, z, resX=100j, resY=100j):
 import ROOT as r
 r.gROOT.SetBatch()
 r.gStyle.SetOptStat(0)
+# Get from LHCXSWG twiki
+#  https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHXSWGMSSMNeutral
+#  mh125_align_13.root: 13 TeV, tanbeta= 1-20, mA = 120-1000 GeV
 f = r.TFile("mh125_align_13.root")
 br_H_tt = f.Get("br_H_tt")
+br_A_tt = f.Get("br_A_tt")
 def get_br(proc,mass,tanbeta=1.,convert_mh=False):
     if tanbeta < 1.: return 1.0
-    return br_H_tt.GetBinContent(br_H_tt.FindBin(mass,tanbeta))
+    if "a" in proc:
+        return br_A_tt.GetBinContent(br_A_tt.FindBin(mass,tanbeta))
+    elif "h" in proc:
+        return br_H_tt.GetBinContent(br_H_tt.FindBin(mass,tanbeta))
+    else:
+        raise Exception("wtf")
 
 def get_df(already_decayed=False,apply_br=True):
 
@@ -71,7 +80,8 @@ def get_df(already_decayed=False,apply_br=True):
         # print df.folder
         # sys.exit()
     else:
-        df = utils.load_data()
+        # df = utils.load_data()
+        df = utils.load_data("data/data_2hdm_nnpdf30loa0130_v2.txt")
         df = df[df.folder.str.contains("2hdm_scan")]
         df  = df.drop(["folder"],axis=1)
 
@@ -129,8 +139,8 @@ if __name__ == "__main__":
     dfc.to_json("xsecs_2hdm.json")
 
     do_plot_xsecs_2d = True
-    do_plot_xsecs_1d = False
-    do_plot_tanbeta_exclusion = False
+    do_plot_xsecs_1d = True
+    do_plot_tanbeta_exclusion = True
 
     if do_plot_xsecs_2d:
         for key in [
@@ -268,7 +278,9 @@ if __name__ == "__main__":
 
             X, Y, Z = grid(x,y,z)
 
-            fig,ax = plt.subplots()
+            # fig,ax = plt.subplots()
+            fig,ax = utils.get_fig_ax()
+            utils.add_cms_info(ax, lumi="137")
 
             masses = dful["mass"]
             pe1 = ax.fill_between(masses, dful["tb_obs"]*0., dful["tb_obs"], linewidth=0., facecolor="0.5", alpha=0.4)
@@ -280,11 +292,20 @@ if __name__ == "__main__":
                                        edgecolor="k", lw=1.,)
 
             particletext = particle.upper().replace("B","H/A")
-            ax.set_title(r"$\sigma(pp\rightarrow tX{particle}\rightarrow t\bar{{t}})\times BR({particle}\rightarrow t\bar{{t}})$".format(particle=particletext))
-            ax.set_xlabel(r"$m_{{{particle}}}$ [GeV]".format(particle=particletext))
+            # ax.set_title(r"$\sigma(pp\rightarrow tX{particle}\rightarrow t\bar{{t}})\times BR({particle}\rightarrow t\bar{{t}})$".format(particle=particletext))
+            ax.set_xlabel(r"$m_\mathrm{{{particle}}}$ (GeV)".format(particle=particletext))
             ax.set_ylabel(r"$\tan\beta$")
 
-            ax.set_ylim([0.,5.])
+            minx,maxx = 350,650
+            miny,maxy = 0.,3.0
+            if particle == "a":
+                # ax.text((maxx-minx)*0.8+minx,maxy*0.8,"pseudoscalar\nmediator",fontsize=14,horizontalalignment="center",verticalalignment="center",color="k")
+                ax.text((maxx-minx)*0.8+minx,maxy*0.70,"pseudoscalar",fontsize=15,horizontalalignment="center",verticalalignment="center",color="k")
+            elif particle == "h":
+                # ax.text((maxx-minx)*0.8+minx,maxy*0.8,"scalar\nmediator",fontsize=14,horizontalalignment="center",verticalalignment="center",color="k")
+                ax.text((maxx-minx)*0.8+minx,maxy*0.70,"scalar",fontsize=15,horizontalalignment="center",verticalalignment="center",color="k")
+
+            ax.set_ylim([0.,3.])
             ax.yaxis.set_minor_locator(MultipleLocator(0.2))
             ax.xaxis.set_minor_locator(MultipleLocator(10.))
 
@@ -294,13 +315,15 @@ if __name__ == "__main__":
                         DoubleBandObject(),
                         ],
                         [
-                        "95% CL Observed exclusion",
-                        r"95% CL Expected exclusion $\pm$1 $\sigma$",
+                        "Observed",
+                        r"Median expected, $\pm$1 $\sigma_\mathrm{experiment}$",
                         ],
                     handler_map={DoubleBandObject: DoubleBandObjectHandler()},
                     # handlelength=2.0,
                     labelspacing=0.6,
+                    title="95% CL exclusions",
                     )
+            legend.get_title().set_fontsize(legend.get_texts()[0].get_fontsize())
 
             fig.tight_layout()
             fname = "plots/plot_2d_2hdm_tanbetaexclusion_{}.png".format(particle)

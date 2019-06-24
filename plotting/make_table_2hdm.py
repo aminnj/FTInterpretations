@@ -173,6 +173,28 @@ def print_lookup():
     print "    return -1;"
     print "}"
 
+def print_dict():
+    # xsec cols already have br multiplied in
+    dfc = pd.read_json("xsecs_2hdm.json")
+    dfc["mass"] = dfc["mass"].astype(int)
+    dfc = dfc[dfc.tanbeta==1].sort_values("mass")
+
+    print "d_xsec = {"
+    for iproc,proc in enumerate([
+            "xsec_tth",
+            "xsec_thw",
+            "xsec_thq",
+            "xsec_tta",
+            "xsec_taw",
+            "xsec_taq",
+            ]):
+        xy = dfc[["mass",proc]].values
+        masses = map(int,xy[:,0])
+        xsecs = xy[:,1]
+        print '    "{}": {},'.format(proc.replace("xsec_",""),dict(zip(masses,xsecs)))
+    print "}"
+
 if __name__ == "__main__":
-    write_tex()
+    # write_tex()
     # print_lookup()
+    print_dict()

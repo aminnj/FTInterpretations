@@ -64,7 +64,7 @@ def load_data(fname="data/data.txt"):
     df = pd.DataFrame(data)
     return df
 
-def add_cms_info(ax, typ="Preliminary", lumi="137", xtype=0.12):
+def add_cms_info(ax, typ="", lumi="137", xtype=0.12):
     ax.text(0.0, 1.01,"CMS", horizontalalignment='left', verticalalignment='bottom', transform = ax.transAxes, weight="bold", size="x-large")
     ax.text(xtype, 1.01,typ, horizontalalignment='left', verticalalignment='bottom', transform = ax.transAxes, style="italic", size="x-large")
     ax.text(0.99, 1.01,"%s fb${}^\mathregular{-1}$ (13 TeV)" % (lumi), horizontalalignment='right', verticalalignment='bottom', transform = ax.transAxes, size="x-large")

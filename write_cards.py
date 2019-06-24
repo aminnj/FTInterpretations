@@ -245,11 +245,37 @@ def get_card_2hdm(
                 "taw": "generate p p > tpm wpm h3",
                 }
 
+    extraparams = dedent("""
+    set run_card maxjetflavor 4
+    set run_card pdlabel 'lhapdf'
+    set run_card lhaid 263000
+    """)
+    if proc in ["thq","taq"]:
+        extraparams = dedent("""
+        set run_card maxjetflavor 4
+        set run_card pdlabel 'lhapdf'
+        set run_card lhaid 263000
+        """)
+    if proc in ["thw","taw"]:
+        extraparams = dedent("""
+        set run_card maxjetflavor 5
+        set run_card pdlabel 'lhapdf'
+        set run_card lhaid 263000
+        """)
+
+    if decay:
+        extraparams += "\n"
+        extraparams += dedent("""
+        set param_card decay 35 Auto
+        set param_card decay 36 Auto
+        """)
+
     template = dedent("""
 
     set auto_update 0
     set run_mode 2
     set nb_core {ncores}
+    set lhapdf /cvmfs/cms.cern.ch/slc6_amd64_gcc481/external/lhapdf6/6.1.5-cms/bin/lhapdf-config
 
     import 2HDMtII_NLO
 
@@ -267,15 +293,13 @@ def get_card_2hdm(
 
 
     set run_card use_syst False
-
+    {extraparams}
     set param_card mass 25 125 # h1
     set param_card frblock 1 {tanbeta} # tanbeta
     set param_card frblock 2 {sinbma} # sinbma
     set param_card mass 35 {mass} # H2 / H
     set param_card mass 36 {mass} # H3 / A
     set param_card mass 37 {decouplemass} # charged Hpm
-    set param_card decay 35 Auto
-    set param_card decay 36 Auto
     {seedstr}
 
     """)
@@ -290,6 +314,7 @@ def get_card_2hdm(
             decouplemass=decouplemass,
             mgoutputname=mgoutputname,
             seedstr=seedstr,
+            extraparams=extraparams,
             )
 
 
@@ -462,7 +487,8 @@ if __name__ == "__main__":
 
     if do_2hdm:
         model = "2hdm"
-        carddir = "./runs/out_2hdm_scan_v1/"
+        # carddir = "./runs/out_2hdm_scan_v1/"
+        carddir = "./runs/out_2hdm_scan_v2/" # PDFs matching Dark matter
         os.system("mkdir -p {}".format(carddir))
         for proc in ["tth","tta","thw","taw","thq","taq"]:
             for mass in range(350,650+20,20):
@@ -560,14 +586,18 @@ if __name__ == "__main__":
             # os.system("mkdir -p {}".format(carddir))
             # for proc in ["ttdm", "sttdm", "stwdm", "ttsm", "sttsm", "stwsm"]:
                 # for massmed,massdm in list(itertools.product([300,350,400,450,500,600,700],[1,50,100,150,300,500,750])):
+            carddir = "./runs/out_{}_matchhiggs_scan_v1/".format(model)
+            gdm = 1
+            gsm = 1
             # carddir = "./runs/out_{}_scan_v4/".format(model)
             # gdm = 1
             # gsm = 1
-            carddir = "./runs/out_{}_scan_v5/".format(model)
-            gdm = 0.5
-            gsm = 1
+            # carddir = "./runs/out_{}_scan_v5/".format(model)
+            # gdm = 0.5
+            # gsm = 1
             os.system("mkdir -p {}".format(carddir))
             for proc in ["ttsm", "sttsm", "stwsm"]:
+                # # Scalar, gdm=0.5
                 # for massmed,massdm in (
                 #         list(itertools.product([350,370,390,410,430,450,470,490,530],[1,100,200,250,300,600])) +
                 #         list(itertools.product([570,650],[1,200,300,600])) +
@@ -575,15 +605,20 @@ if __name__ == "__main__":
                 #         list(itertools.product([510],[250,300,600])) +
                 #         list(itertools.product([550],[300,600]))
                 #         ):
+                # # Pseudoscalar, gdm=0.5
+                # for massmed,massdm in (
+                #         list(itertools.product([350,370,390,410,430,450,470,490,530],[1,100,200,600])) +
+                #         list(itertools.product([350,370,390,410,430,470,490,530],[50])) +
+                #         list(itertools.product([490,530,570,650],[1,200,300,600])) +
+                #         list(itertools.product([350,370,390,410,430,450,470,490,510],[150])) +
+                #         list(itertools.product([550,590],[300,600])) +
+                #         list(itertools.product([510],[250,300,600])) +
+                #         list(itertools.product([450,470,490,530],[250])) +
+                #         list(itertools.product([450,470],[300]))
+                #         ):
+                # # In order to make curve that matches higgs spacing (mDM=800)
                 for massmed,massdm in (
-                        list(itertools.product([350,370,390,410,430,450,470,490,530],[1,100,200,600])) +
-                        list(itertools.product([350,370,390,410,430,470,490,530],[50])) +
-                        list(itertools.product([490,530,570,650],[1,200,300,600])) +
-                        list(itertools.product([350,370,390,410,430,450,470,490,510],[150])) +
-                        list(itertools.product([550,590],[300,600])) +
-                        list(itertools.product([510],[250,300,600])) +
-                        list(itertools.product([450,470,490,530],[250])) +
-                        list(itertools.product([450,470],[300]))
+                        list(itertools.product([350,370,390,410,430,450,470,490,510,530,550,570,590,610,630,650],[600]))
                         ):
                     massdm = max(massdm,1)
                     tag = "{model}_{proc}_{massmed}_{massdm}".format(model=model,proc=proc,massmed=massmed,massdm=massdm)

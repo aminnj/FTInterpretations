@@ -163,7 +163,7 @@ dfc2 = get_df(g11=False)
 
 # sys.exit()
 
-do_scatter = True
+do_scatter = False
 for which in [
         "dmscalar",
         "dmpseudo",
@@ -218,7 +218,7 @@ for which in [
                 else: s = "{:.2f}".format(xsec)
                 # # FIXME
                 # s = "{:.2f}".format(exprval)
-                s = "{:.2f}".format(obsrval)
+                # s = "{:.2f}".format(obsrval)
                 data_rvals1.append([massmed,massdm,exprval,obsrval])
                 if do_scatter:
                     ax.text(massmed,massdm+8.,s,fontsize=6,horizontalalignment="center",verticalalignment="bottom",color=color)
@@ -250,12 +250,18 @@ for which in [
         p1 = ax.transData.transform_point((minx,0.5*minx))
         p2 = ax.transData.transform_point((maxx,0.5*maxy))
         angle =  np.degrees(np.arctan2(*(p2-p1)[::-1]))
-        ax.text(maxx,0.5*maxy-40,r"$\mathrm{m}_\mathrm{med}<2 \mathrm{m}_\mathrm{DM}$   ",fontsize=10,horizontalalignment="right",verticalalignment="bottom",rotation=angle, color="0.3")
+        # ax.text(maxx,0.5*maxy-40,r"$\mathrm{m}_\mathrm{med}<2 \mathrm{m}_\mathrm{DM}$   ",fontsize=10,horizontalalignment="right",verticalalignment="bottom",rotation=angle, color="0.3")
+        if "pseudo" in which:
+            ax.text(maxx,0.5*maxy-30,r"$m_\mathrm{A}<2 m_\chi$   ",fontsize=10,horizontalalignment="right",verticalalignment="bottom",rotation=angle, color="0.3")
+        else:
+            ax.text(maxx,0.5*maxy-30,r"$m_\mathrm{H}<2 m_\chi$   ",fontsize=10,horizontalalignment="right",verticalalignment="bottom",rotation=angle, color="0.3")
 
         if "pseudo" in which:
-            ax.text((maxx-minx)*0.8+minx,maxy*0.8,"pseudoscalar\nmediator",fontsize=14,horizontalalignment="center",verticalalignment="center",color="k")
+            # ax.text((maxx-minx)*0.8+minx,maxy*0.8,"pseudoscalar\nmediator",fontsize=14,horizontalalignment="center",verticalalignment="center",color="k")
+            ax.text((maxx-minx)*0.8+minx,maxy*0.8,"pseudoscalar",fontsize=15,horizontalalignment="center",verticalalignment="center",color="k")
         else:
-            ax.text((maxx-minx)*0.8+minx,maxy*0.8,"scalar\nmediator",fontsize=14,horizontalalignment="center",verticalalignment="center",color="k")
+            # ax.text((maxx-minx)*0.8+minx,maxy*0.8,"scalar\nmediator",fontsize=14,horizontalalignment="center",verticalalignment="center",color="k")
+            ax.text((maxx-minx)*0.8+minx,maxy*0.8,"scalar",fontsize=15,horizontalalignment="center",verticalalignment="center",color="k")
 
         if do_exclusion:
 
@@ -368,10 +374,14 @@ for which in [
                     OneSideHatchObject4(),
                     ],
                     [
-                        r"Obs. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=1)",
-                        r"Exp. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=1)",
-                        r"Obs. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=0.5)",
-                        r"Exp. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=0.5)",
+                        # r"Obs. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=1)",
+                        # r"Exp. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=1)",
+                        # r"Obs. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=0.5)",
+                        # r"Exp. ($g_\mathrm{q}$=1, $g_\mathrm{\chi}$=0.5)",
+                        r"Obs. ($g_\mathrm{SM}$=1, $g_\mathrm{DM}$=1)",
+                        r"Exp. ($g_\mathrm{SM}$=1, $g_\mathrm{DM}$=1)",
+                        r"Obs. ($g_\mathrm{SM}$=1, $g_\mathrm{DM}$=0.5)",
+                        r"Exp. ($g_\mathrm{SM}$=1, $g_\mathrm{DM}$=0.5)",
                         ],
                     handler_map={
                         OneSideHatchObject1: OneSideHatchObjectHandler(edgecolor=color_obs,facecolor=tuple(list(color_obs)+[0.30])),
@@ -384,15 +394,20 @@ for which in [
                     # loc="upper left",
                     loc="lower right",
                     # loc="upper right",
-                    title="Exclusion at 95% CL",
-                    fontsize=10,
+                    title="95% CL exclusions",
+                    fontsize=11,
                     )
             legend.get_title().set_fontsize(legend.get_texts()[0].get_fontsize())
 
 
         # text = ax.set_title(title)
-        ax.set_ylabel(r"DM mass")
-        ax.set_xlabel(r"mediator mass")
+        # ax.set_ylabel(r"DM mass")
+        ax.set_ylabel(r"$m_\chi$ (GeV)")
+        # ax.set_xlabel(r"mediator mass")
+        if "pseudo" in which:
+            ax.set_xlabel(r"$m_\mathrm{A}$ (GeV)")
+        else:
+            ax.set_xlabel(r"$m_\mathrm{H}$ (GeV)")
 
         ax.yaxis.set_minor_locator(MultipleLocator(25.))
         ax.xaxis.set_minor_locator(MultipleLocator(25.))

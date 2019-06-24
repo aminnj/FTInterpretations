@@ -77,12 +77,20 @@ def get_df_tth(s):
 
 def get_df_custom():
     # from /home/users/namin/2018/fourtop/all/FTAnalysis/analysis/limits/test_ft_updated2018_run2_19Mar5/run_oblique_scan.sh
+    # private samples -- 0.123
+    # lines = """
+# v3.28_ft_test_Apr20_oblique_v1///card_hhat0p04_srdisc_run2.log:Observed Limit: r < 1.6506
+# v3.28_ft_test_Apr20_oblique_v1///card_hhat0p08_srdisc_run2.log:Observed Limit: r < 1.3035
+# v3.28_ft_test_Apr20_oblique_v1///card_hhat0p0_srdisc_run2.log:Observed Limit: r < 1.8804
+# v3.28_ft_test_Apr20_oblique_v1///card_hhat0p12_srdisc_run2.log:Observed Limit: r < 1.0232
+# v3.28_ft_test_Apr20_oblique_v1///card_hhat0p16_srdisc_run2.log:Observed Limit: r < 0.8013
+    # """.strip().splitlines()
+    # official samples -- 0.117
     lines = """
-v3.28_ft_test_Apr20_oblique_v1///card_hhat0p04_srdisc_run2.log:Observed Limit: r < 1.6506
-v3.28_ft_test_Apr20_oblique_v1///card_hhat0p08_srdisc_run2.log:Observed Limit: r < 1.3035
+v3.28_ft_test_Apr20_oblique_v1///card_hhat0p08_srdisc_run2.log:Observed Limit: r < 1.2566
 v3.28_ft_test_Apr20_oblique_v1///card_hhat0p0_srdisc_run2.log:Observed Limit: r < 1.8804
-v3.28_ft_test_Apr20_oblique_v1///card_hhat0p12_srdisc_run2.log:Observed Limit: r < 1.0232
-v3.28_ft_test_Apr20_oblique_v1///card_hhat0p16_srdisc_run2.log:Observed Limit: r < 0.8013
+v3.28_ft_test_Apr20_oblique_v1///card_hhat0p12_srdisc_run2.log:Observed Limit: r < 0.9821
+v3.28_ft_test_Apr20_oblique_v1///card_hhat0p16_srdisc_run2.log:Observed Limit: r < 0.7703
     """.strip().splitlines()
     def parse(line):
         hhat = float(line.split(":",1)[0].split("hhat",1)[1].split("_",1)[0].replace("p","."))

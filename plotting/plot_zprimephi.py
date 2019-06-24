@@ -24,10 +24,11 @@ BDTOBSULWEAKER = 23.0 # Note, this was calculated with an extra 10% normalizatio
 class OneSideHatchObject1(object): pass
 class OneSideHatchObject2(object): pass
 class OneSideHatchObjectHandler(object):
-    def __init__(self, edgecolor=(0.4,0.4,0.4), facecolor="none", linewidth=2.):
+    def __init__(self, edgecolor=(0.4,0.4,0.4), facecolor="none", linewidth=2.,hatch="///"):
         self.facecolor = facecolor
         self.edgecolor = edgecolor
         self.linewidth = linewidth
+        self.hatch = hatch
     def legend_artist(self, legend, orig_handle, fontsize, handlebox):
         # print legend
         x0, y0 = handlebox.xdescent, handlebox.ydescent
@@ -38,7 +39,7 @@ class OneSideHatchObjectHandler(object):
                 )
         handlebox.add_artist(patch)
         patch = mpatches.Rectangle([x0, y0+height*0.2], width, height-height*0.2, facecolor=self.facecolor,
-                                   edgecolor=self.edgecolor, hatch='///', lw=0.,
+                                   edgecolor=self.edgecolor, hatch=self.hatch, lw=0.,
                                    transform=handlebox.get_transform())
         handlebox.add_artist(patch)
         return patch
@@ -137,8 +138,10 @@ def plot_2d_both(edges_zprime,edges_phi):
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
 
     utils.add_cms_info(ax, lumi="137")
-    ax.set_ylabel(r"mediator-top coupling")
-    ax.set_xlabel(r"mediator mass (GeV)")
+    # ax.set_ylabel(r"mediator-top coupling")
+    # ax.set_xlabel(r"mediator mass (GeV)")
+    ax.set_ylabel(r"coupling")
+    ax.set_xlabel(r"$m_\phi$ or $m_\mathrm{Z'}$ (GeV)")
 
     thickness = 0.075
     edgecolor_zprime=(0.18,0.43,0.11,1.0)
@@ -148,7 +151,7 @@ def plot_2d_both(edges_zprime,edges_phi):
 
     edgecolor_phi=(0.0,0.06,0.64,1.0)
     ax.fill_between(edges_phi[:,0], edges_phi[:,1], 2.0*np.ones(len(edges_phi)), linewidth=0., edgecolor=(0.,0.,0.,0.), facecolor=(0.,0.06,0.64,0.15))
-    p3 = ax.fill_between(edges_phi[:,0], edges_phi[:,1], edges_phi[:,1]+thickness, linewidth=0., edgecolor=edgecolor_phi, facecolor="none",hatch="///")
+    p3 = ax.fill_between(edges_phi[:,0], edges_phi[:,1], edges_phi[:,1]+thickness, linewidth=0., edgecolor=edgecolor_phi, facecolor="none",hatch="\\\\\\")
     p4 = ax.plot(edges_phi[:,0], edges_phi[:,1], linewidth=2.0, linestyle="-", marker="",color=edgecolor_phi)
 
     legend = ax.legend(
@@ -161,11 +164,11 @@ def plot_2d_both(edges_zprime,edges_phi):
                 "scalar $\phi$",
                 ],
             handler_map={
-                OneSideHatchObject1: OneSideHatchObjectHandler(edgecolor=edgecolor_zprime,linewidth=2.),
-                OneSideHatchObject2: OneSideHatchObjectHandler(edgecolor=edgecolor_phi,linewidth=2.),
+                OneSideHatchObject1: OneSideHatchObjectHandler(edgecolor=edgecolor_zprime,linewidth=2.,hatch="///"),
+                OneSideHatchObject2: OneSideHatchObjectHandler(edgecolor=edgecolor_phi,linewidth=2.,hatch="\\\\\\"),
                 },
             labelspacing=0.6,
-            title="Observed exclusion",
+            title="95% CL observed exclusions",
             # ncol=2,
             )
     legend.get_title().set_fontsize(legend.get_texts()[0].get_fontsize())
