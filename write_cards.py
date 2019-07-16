@@ -4,6 +4,67 @@ from textwrap import dedent
 
 iseed = 0
 
+def get_card_mq(
+        model,
+        ncores=1,
+        nevents=10000,
+        mgoutputname="./runs/out_test_v1/test_v1",
+        carddir="./runs/out_test_v1/",
+        kappa=1.0,
+        mass=25.0,
+        ):
+
+    template = dedent("""
+    set auto_update 0
+    set run_mode 2
+    set nb_core {ncores}
+
+    {importstr}
+
+    define p = p b b~
+    define j = j b b~
+    generate p p > {particle}+ {particle}-
+    add process p p > {particle}+ {particle}- j
+
+    output {mgoutputname} -nojpeg
+    launch
+    
+    set param_card MASS {pid} {mass}
+    {kappaparam}
+    set run_card ebeam1 7000.0
+    set run_card ebeam2 7000.0
+    set run_card nevents {nevents}
+    set run_card use_syst False
+
+    set run_card ptl -1.0
+    set run_card etal -1.0
+    set run_card ickkw 0
+    set run_card xqcut 0.0
+    """)
+
+    if model in ["mq5","mq"]:
+        return template.format(
+                ncores=ncores,
+                nevents=nevents,
+                mass = mass,
+                mgoutputname=mgoutputname,
+                importstr = "import model mq5_UFO-full",
+                particle = "e",
+                pid = 11,
+                kappaparam = "set param_card TEMP 11 {kappa}".format(kappa=kappa)
+                )
+    if model == "mq4":
+        return template.format(
+                ncores=ncores,
+                nevents=nevents,
+                mass = mass,
+                mgoutputname=mgoutputname,
+                importstr = "import model_v4 mq4_UFO",
+                particle = "mq",
+                pid = 300015,
+                kappaparam = "",
+                )
+
 def get_card_oblique(
         proc="tttt",
         ncores=4,
@@ -423,6 +484,8 @@ def get_card(model,**kwargs):
         return get_card_dmpseudo(**kwargs)
     elif model == "oblique":
         return get_card_oblique(**kwargs)
+    elif model in ["mq","mq4","mq5"]:
+        return get_card_mq(model,**kwargs)
     else:
         raise Exception("{} isn't a valid model".format(model))
 
@@ -436,13 +499,14 @@ if __name__ == "__main__":
     do_oblique = False
 
     # testing stuff
-    do_dm_test = True
+    do_dm_test = False
     do_2hdm_decay = False
     do_oblique_manyevents = False
     do_oblique_run2 = False
     do_oblique_tth_test = False
     do_2hdm_decaytest = False
     do_2hdm_bigtest = False
+    do_mq_test = True
 
     os.system("mkdir -p runs")
 
@@ -653,3 +717,17 @@ if __name__ == "__main__":
                 cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
                 buff = get_card(model=model,ncores=3,proc=proc,mgoutputname=mgoutputname,carddir=carddir, mass=mass,decouplemass=10000,tanbeta=tanbeta,decay=True,nevents=100000,unique_seeds=True)
                 write_card(buff,cardname,dryrun=False)
+
+    if do_mq_test:
+        for model in ["mq4","mq5"]:
+            carddir = "./runs/out_{model}_14tev_v1/".format(model=model)
+            os.system("mkdir -p {}".format(carddir))
+            kappa = 1.0
+            for mass in [0.1,0.28,0.43,0.6,0.78,1.0,1.25,1.52,1.84,2.2,2.6,3.04,3.54,4.1,4.71,5.4,6.15,6.98,7.9,8.9,10.0,11.2,12.5,14.0,15.5,17.2,19.1,21.1,23.3,25.6,28.2,30.9,33.9,37.1,40.5,44.2,48.2,52.5,57.1,62.1,67.4,73.0,79.1,85.6,92.6,100.]:
+                tag = "{model}_{mass}_{kappa}".format(model=model,mass=str(mass).replace(".","p"),kappa=str(kappa).replace(".","p"))
+                mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                buff = get_card(model=model,ncores=1,mgoutputname=mgoutputname,carddir=carddir, mass=mass,kappa=kappa)
+                write_card(buff,cardname,dryrun=False)
+
+

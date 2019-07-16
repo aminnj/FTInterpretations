@@ -1,0 +1,3 @@
+c      Input values....
+      double precision eps ,gp  
+      common /USR_PARAM/  eps ,gp  
