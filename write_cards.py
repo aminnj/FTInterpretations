@@ -12,7 +12,13 @@ def get_card_mq(
         carddir="./runs/out_test_v1/",
         kappa=1.0,
         mass=25.0,
+        unique_seeds=True,
         ):
+    global iseed
+    seedstr = ""
+    if unique_seeds:
+        iseed += 1
+        seedstr = "set run_card iseed {}".format(iseed)
 
     template = dedent("""
     set auto_update 0
@@ -40,6 +46,8 @@ def get_card_mq(
     set run_card etal -1.0
     set run_card ickkw 0
     set run_card xqcut 0.0
+
+    {seedstr}
     """)
 
     if model in ["mq5","mq"]:
@@ -51,7 +59,8 @@ def get_card_mq(
                 importstr = "import model mq5_UFO-full",
                 particle = "e",
                 pid = 11,
-                kappaparam = "set param_card TEMP 11 {kappa}".format(kappa=kappa)
+                kappaparam = "set param_card TEMP 11 {kappa}".format(kappa=kappa),
+                seedstr=seedstr,
                 )
     if model == "mq4":
         return template.format(
@@ -63,6 +72,7 @@ def get_card_mq(
                 particle = "mq",
                 pid = 300015,
                 kappaparam = "",
+                seedstr=seedstr,
                 )
 
 def get_card_oblique(
@@ -720,14 +730,17 @@ if __name__ == "__main__":
 
     if do_mq_test:
         for model in ["mq4","mq5"]:
-            carddir = "./runs/out_{model}_14tev_v1/".format(model=model)
+            carddir = "./runs/out_{model}_14tev_v2/".format(model=model)
             os.system("mkdir -p {}".format(carddir))
             kappa = 1.0
+            nevents=10000
+            njobs_per_mass = 3
             for mass in [0.1,0.28,0.43,0.6,0.78,1.0,1.25,1.52,1.84,2.2,2.6,3.04,3.54,4.1,4.71,5.4,6.15,6.98,7.9,8.9,10.0,11.2,12.5,14.0,15.5,17.2,19.1,21.1,23.3,25.6,28.2,30.9,33.9,37.1,40.5,44.2,48.2,52.5,57.1,62.1,67.4,73.0,79.1,85.6,92.6,100.]:
-                tag = "{model}_{mass}_{kappa}".format(model=model,mass=str(mass).replace(".","p"),kappa=str(kappa).replace(".","p"))
-                mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
-                cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
-                buff = get_card(model=model,ncores=1,mgoutputname=mgoutputname,carddir=carddir, mass=mass,kappa=kappa)
-                write_card(buff,cardname,dryrun=False)
+                for chunk in range(njobs_per_mass):
+                    tag = "{model}_{mass}_{kappa}_chunk{chunk}".format(model=model,mass=str(mass).replace(".","p"),kappa=str(kappa).replace(".","p"),chunk=chunk)
+                    mgoutputname = "{carddir}/{tag}".format(carddir=carddir,tag=tag)
+                    cardname = "{carddir}/proc_card_{tag}.dat".format(carddir=carddir,tag=tag)
+                    buff = get_card(model=model,ncores=1,mgoutputname=mgoutputname,carddir=carddir, mass=mass,kappa=kappa,nevents=nevents)
+                    write_card(buff,cardname,dryrun=False)
 
 
